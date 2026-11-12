@@ -366,7 +366,7 @@ fun QuranReaderScreen(
 
     LaunchedEffect(language) {
         translationSheetLanguage = language
-        tafseerSheetLanguage = language
+        tafseerSheetLanguage = AppLanguage.URDU
     }
 
     Scaffold(
@@ -687,24 +687,68 @@ fun QuranReaderScreen(
                         }
                     }
 
-                    // 4 Language Selector Chips
+                    // Urdu is the fixed source language; the next row changes only the display translation.
                     item {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(9.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            val languages = listOf(
-                                AppLanguage.URDU to "اردو",
-                                AppLanguage.ENGLISH to "English",
-                                AppLanguage.HINDI to "हिन्दी",
-                                AppLanguage.ARABIC to "العربية"
+                            Text(
+                                text = "اصل تفسیر کی زبان",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            languages.forEach { (lang, label) ->
-                                FilterChip(
-                                    selected = translationSheetLanguage == lang,
-                                    onClick = { translationSheetLanguage = lang },
-                                    label = { Text(label, fontWeight = FontWeight.Bold) },
-                                    modifier = Modifier.testTag("trans_lang_${lang.code}")
+                            FilterChip(
+                                selected = true,
+                                onClick = { tafseerSheetLanguage = AppLanguage.URDU },
+                                label = { Text("اردو — اصل مستند تفسیر", fontWeight = FontWeight.Bold) },
+                                modifier = Modifier.testTag("tafseer_source_ur")
+                            )
+                            Text(
+                                text = when (tafseerSheetLanguage) {
+                                    AppLanguage.URDU -> "اصل اردو متن دکھایا جا رہا ہے۔"
+                                    AppLanguage.ENGLISH -> "The original Urdu commentary is translated into English on this device."
+                                    AppLanguage.HINDI -> "मूल उर्दू तफ़सीर का हिंदी में मशीन अनुवाद इस डिवाइस पर किया जाएगा।"
+                                    AppLanguage.ARABIC -> "تُترجم التفسيرات الأردية الأصلية إلى العربية على هذا الجهاز."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "ترجمہ کریں:",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                val outputLanguages = listOf(
+                                    AppLanguage.URDU to "اردو",
+                                    AppLanguage.ENGLISH to "English",
+                                    AppLanguage.HINDI to "हिन्दी",
+                                    AppLanguage.ARABIC to "العربية"
+                                )
+                                outputLanguages.forEach { (lang, label) ->
+                                    FilterChip(
+                                        selected = tafseerSheetLanguage == lang,
+                                        onClick = { tafseerSheetLanguage = lang },
+                                        label = { Text(label, fontWeight = FontWeight.Bold) },
+                                        modifier = Modifier.testTag("tafseer_lang_${lang.code}")
+                                    )
+                                }
+                            }
+                            if (tafseerSheetLanguage != AppLanguage.URDU) {
+                                Text(
+                                    text = when (tafseerSheetLanguage) {
+                                        AppLanguage.ENGLISH -> "This is an on-device machine translation, not a published English edition or scholar-approved translation. The first use may need internet to download Google's language model."
+                                        AppLanguage.HINDI -> "यह डिवाइस पर किया गया मशीन अनुवाद है, प्रकाशित हिंदी संस्करण नहीं। पहली बार भाषा मॉडल डाउनलोड करने के लिए इंटरनेट की आवश्यकता हो सकती है।"
+                                        AppLanguage.ARABIC -> "هذه ترجمة آلية على الجهاز وليست طبعة عربية منشورة أو ترجمة معتمدة من العالم. قد يلزم الإنترنت أول مرة لتنزيل نموذج اللغة."
+                                        AppLanguage.URDU -> ""
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -875,8 +919,8 @@ fun QuranReaderScreen(
         // Tafseer Bottom Sheet with Top 5 Ulama / Classical Scholars
         if (activeTafseerAyah != null) {
             val curAyah = activeTafseerAyah!!
-            val scholars = remember(tafseerSheetLanguage) {
-                QuranTafseerRepository.getTop5Scholars(tafseerSheetLanguage)
+            val scholars = remember {
+                QuranTafseerRepository.getTop5Scholars(AppLanguage.URDU)
             }
             LaunchedEffect(curAyah.surahNumber, curAyah.ayahNumber, selectedScholarKey, tafseerSheetLanguage) {
                 isTafseerLoading = true
