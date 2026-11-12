@@ -37,6 +37,7 @@ import com.example.data.repository.QuranTafseerRepository
 import com.example.localization.AppLocalization
 import com.example.ui.components.NoorTopBar
 import com.example.ui.theme.QuranNaskhFontFamily
+import kotlinx.coroutines.launch
 
 @Composable
 fun QuranListScreen(
@@ -363,6 +364,18 @@ fun QuranReaderScreen(
     var selectedScholarKey by remember { mutableStateOf("ibn_kathir") }
     var loadedScholarTafseer by remember { mutableStateOf<ScholarTafseer?>(null) }
     var isTafseerLoading by remember { mutableStateOf(false) }
+    val tafseerScope = rememberCoroutineScope()
+    var isDownloadingAllTafseer by remember { mutableStateOf(false) }
+    var offlineTafseerReady by remember { mutableStateOf(false) }
+    var tafseerDownloadCompleted by remember { mutableIntStateOf(0) }
+    var tafseerDownloadTotal by remember { mutableIntStateOf(570) }
+    var tafseerDownloadLabel by remember { mutableStateOf("") }
+    var tafseerDownloadError by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        QuranTafseerRepository.init(context)
+        offlineTafseerReady = QuranTafseerRepository.isAllUrduTafseerDownloaded(context)
+    }
 
     LaunchedEffect(language) {
         translationSheetLanguage = language
@@ -916,6 +929,67 @@ fun QuranReaderScreen(
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                    }
+
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = if (offlineTafseerReady) "پانچوں اردو تفاسیر آف لائن محفوظ ہیں" else "پانچوں اردو تفاسیر آف لائن محفوظ کریں",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "ایک مرتبہ انٹرنیٹ پر 5 تفاسیر کی تمام 114 سورتیں ڈاؤن لوڈ کریں۔ مکمل ہونے کے بعد اردو متن انٹرنیٹ کے بغیر دستیاب ہوگا۔ ڈاؤن لوڈ دوبارہ شروع کیا جا سکتا ہے۔",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (isDownloadingAllTafseer) {
+                                    LinearProgressIndicator(
+                                        progress = { if (tafseerDownloadTotal > 0) tafseerDownloadCompleted.toFloat() / tafseerDownloadTotal else 0f },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Text(
+                                        text = "$tafseerDownloadCompleted / $tafseerDownloadTotal سورتیں • $tafseerDownloadLabel",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                                if (tafseerDownloadError.isNotBlank()) {
+                                    Text(tafseerDownloadError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Button(
+                                    enabled = !isDownloadingAllTafseer && !offlineTafseerReady,
+                                    onClick = {
+                                        tafseerDownloadError = ""
+                                        isDownloadingAllTafseer = true
+                                        tafseerScope.launch {
+                                            val result = QuranTafseerRepository.downloadAllUrduTafseer(context) { done, total, label ->
+                                                tafseerDownloadCompleted = done
+                                                tafseerDownloadTotal = total
+                                                tafseerDownloadLabel = label
+                                            }
+                                            isDownloadingAllTafseer = false
+                                            offlineTafseerReady = result.success && QuranTafseerRepository.isAllUrduTafseerDownloaded(context)
+                                            if (!result.success) {
+                                                tafseerDownloadError = "ڈاؤن لوڈ مکمل نہیں ہوا: ${result.error ?: "نامعلوم خرابی"} — دوبارہ دبائیں؛ پہلے محفوظ شدہ سورتیں برقرار رہیں گی۔"
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.Download, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(if (isDownloadingAllTafseer) "ڈاؤن لوڈ جاری ہے…" else if (offlineTafseerReady) "آف لائن ڈاؤن لوڈ مکمل" else "تمام اردو تفاسیر ڈاؤن لوڈ کریں")
+                                }
+                            }
+                        }
                     }
 
                     // Urdu source selector and separate target-language translation controls.
