@@ -143,15 +143,12 @@ object DuaAudioPlayer {
             } catch (_: Exception) {}
         }
 
-        // Fallback gentle tone notification if TTS is unready on device
-        try {
-            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
-            activeContext?.let {
-                Toast.makeText(it, "🔊 $activeDuaTranslit", Toast.LENGTH_SHORT).show()
-            }
-        } catch (_: Exception) {}
-
+        // A beep is not a recitation. Do not present it as audio when Arabic TTS is unavailable.
+        activeContext?.let {
+            Toast.makeText(it, "Arabic pronunciation is unavailable on this device. No Qari recording is bundled for this dua.", Toast.LENGTH_LONG).show()
+        }
         _isPlaying.value = false
+        _currentDuaId.value = null
     }
 
     fun pause() {
