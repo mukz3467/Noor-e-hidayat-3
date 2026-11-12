@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -49,9 +50,21 @@ object QuranTafseerRepository {
 
     private val cache = ConcurrentHashMap<String, ScholarTafseer>()
     @Volatile private var offlinePrefs: SharedPreferences? = null
+    @Volatile private var appContext: Context? = null
+
+    data class OfflineDownloadResult(val success: Boolean, val completed: Int, val total: Int, val error: String? = null)
+    private data class UrduSource(val scholarKey: String, val slug: String, val label: String)
+    private val urduSources = listOf(
+        UrduSource("ibn_kathir", "tafseer-ibn-e-kaseer-urdu", "تفسیر ابن کثیر"),
+        UrduSource("sayyid_qutb", "tafsir-fe-zalul-quran-syed-qatab", "فی ظلال القرآن"),
+        UrduSource("bayan_ul_quran", "tafsir-bayan-ul-quran", "بیان القرآن"),
+        UrduSource("tazkirul_quran", "tazkiru-quran-ur", "تذکیر القرآن"),
+        UrduSource("saadi", "ur-tafsir-as-saadi-urdu", "تفسیر السعدی")
+    )
 
     /** Initialize persistent storage once from the application context. */
     fun init(context: Context) {
+        appContext = context.applicationContext
         if (offlinePrefs == null) {
             synchronized(this) {
                 if (offlinePrefs == null) {
@@ -62,6 +75,88 @@ object QuranTafseerRepository {
                 }
             }
         }
+    }
+
+    private fun editionDir(context: Context, slug: String) = File(context.filesDir, "tafseer_offline/$slug")
+
+    fun isAllUrduTafseerDownloaded(context: Context): Boolean =
+        urduSources.all { source ->
+            val dir = editionDir(context, source.slug)
+            File(dir, "_complete").exists() && (1..114).all { File(dir, "$it.json").exists() }
+        }
+
+    suspend fun downloadAllUrduTafseer(context: Context, onProgress: (Int, Int, String) -> Unit): OfflineDownloadResult =
+        withContext(Dispatchers.IO) {
+            init(context)
+            val total = urduSources.size * 114
+            var completed = 0
+            try {
+                for (source in urduSources) {
+                    val dir = editionDir(context, source.slug)
+                    if (File(dir, "_complete").exists() && (1..114).all { File(dir, "$it.json").exists() }) {
+                        completed += 114
+                        onProgress(completed, total, source.label)
+                        continue
+                    }
+                    dir.mkdirs()
+                    File(dir, "_complete").delete()
+                    for (surah in 1..114) {
+                        val target = File(dir, "$surah.json")
+                        if (target.exists()) {
+                            try {
+                                val old = JSONObject(target.readText(Charsets.UTF_8)).optJSONArray("ayahs")
+                                val expected = QuranData.surahs.first { it.number == surah }.ayahCount
+                                if (old != null && old.length() == expected &&
+                                    (0 until old.length()).all { old.optJSONObject(it)?.optString("text")?.isNotBlank() == true }) {
+                                    completed++
+                                    onProgress(completed, total, source.label)
+                                    continue
+                                }
+                            } catch (_: Exception) { }
+                            target.delete()
+                        }
+                        val url = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${source.slug}/$surah.json"
+                        val request = Request.Builder().url(url).header("User-Agent", "Noor-e-Hidayat/1.0").get().build()
+                        val body = client.newCall(request).execute().use { response ->
+                            if (!response.isSuccessful) throw IllegalStateException("${source.label}, سورۃ $surah: HTTP ${response.code}")
+                            response.body?.string().orEmpty()
+                        }
+                        val json = JSONObject(body)
+                        val ayahs = json.optJSONArray("ayahs") ?: throw IllegalStateException("${source.label}: سورۃ $surah کا ڈیٹا موجود نہیں")
+                        val expected = QuranData.surahs.first { it.number == surah }.ayahCount
+                        if (ayahs.length() != expected) throw IllegalStateException("${source.label}, سورۃ $surah: ${ayahs.length()}/$expected آیات ملیں")
+                        for (index in 0 until ayahs.length()) {
+                            val item = ayahs.optJSONObject(index) ?: throw IllegalStateException("خراب آیت ریکارڈ")
+                            if (item.optInt("ayah") != index + 1 || item.optString("text").isBlank()) {
+                                throw IllegalStateException("${source.label}, سورۃ $surah، آیت ${index + 1}: متن نامکمل ہے")
+                            }
+                        }
+                        val temp = File(dir, "$surah.json.tmp")
+                        temp.writeText(json.toString(), Charsets.UTF_8)
+                        if (target.exists()) target.delete()
+                        if (!temp.renameTo(target)) throw IllegalStateException("فائل محفوظ نہیں ہو سکی")
+                        completed++
+                        onProgress(completed, total, source.label)
+                    }
+                    File(dir, "_complete").writeText("verified=114;slug=${source.slug}", Charsets.UTF_8)
+                }
+                OfflineDownloadResult(true, completed, total)
+            } catch (error: Exception) {
+                OfflineDownloadResult(false, completed, total, error.message ?: "Download failed")
+            }
+        }
+
+    private fun readDownloadedAyah(slug: String, surah: Int, ayah: Int): String? {
+        return try {
+            val context = appContext ?: return null
+            val file = File(editionDir(context, slug), "$surah.json")
+            if (!file.exists()) return null
+            val list = JSONObject(file.readText(Charsets.UTF_8)).optJSONArray("ayahs") ?: return null
+            (0 until list.length()).firstNotNullOfOrNull { index ->
+                val item = list.optJSONObject(index)
+                if (item?.optInt("ayah") == ayah) item.optString("text").takeIf { it.isNotBlank() } else null
+            }
+        } catch (_: Exception) { null }
     }
 
     private fun offlineKey(cacheKey: String): String =
@@ -131,17 +226,17 @@ object QuranTafseerRepository {
     /** Map each visible source choice to its exact catalogue edition. */
     private fun editionFor(scholarKey: String, language: AppLanguage): Edition? = when (scholarKey) {
         "sayyid_qutb" -> if (language == AppLanguage.URDU)
-            Edition("ur-tafsir-fe-zalul-quran-syed-qatab", "Fi Zilal al-Quran by Sayyid Ibrahim Qutb; spa5k/tafsir_api", AppLanguage.URDU) else null
+            Edition("tafsir-fe-zalul-quran-syed-qatab", "Fi Zilal al-Quran by Sayyid Ibrahim Qutb; spa5k/tafsir_api", AppLanguage.URDU) else null
         "ibn_kathir" -> when (language) {
-            AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Urdu Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.URDU)
+            AppLanguage.URDU -> Edition("tafseer-ibn-e-kaseer-urdu", "Urdu Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.URDU)
             AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.ARABIC)
             AppLanguage.ENGLISH -> Edition("en-tafisr-ibn-kathir", "English Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.ENGLISH)
             AppLanguage.HINDI -> null
         }
         "bayan_ul_quran" -> if (language == AppLanguage.URDU)
-            Edition("ur-tafsir-bayan-ul-quran", "Tafsir Bayan ul Quran by Dr. Israr Ahmad; spa5k/tafsir_api", AppLanguage.URDU) else null
+            Edition("tafsir-bayan-ul-quran", "Tafsir Bayan ul Quran by Dr. Israr Ahmad; spa5k/tafsir_api", AppLanguage.URDU) else null
         "tazkirul_quran" -> when (language) {
-            AppLanguage.URDU -> Edition("ur-tazkirul-quran", "Tazkirul Quran Urdu; spa5k/tafsir_api", AppLanguage.URDU)
+            AppLanguage.URDU -> Edition("tazkiru-quran-ur", "Tazkirul Quran Urdu; spa5k/tafsir_api", AppLanguage.URDU)
             AppLanguage.ENGLISH -> Edition("en-tazkirul-quran", "Tazkirul Quran English; spa5k/tafsir_api", AppLanguage.ENGLISH)
             else -> null
         }
@@ -300,9 +395,18 @@ object QuranTafseerRepository {
         val cacheKey = "${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}/${language.code}"
         cache[cacheKey]?.let { return@withContext it }
 
-        // Urdu and English are persisted for offline reading after the first successful fetch.
-        // Arabic and Hindi continue to use the online source.
-        if (language == AppLanguage.URDU || language == AppLanguage.ENGLISH) {
+        if (language == AppLanguage.URDU) {
+            readDownloadedAyah(edition.slug, ayah.surahNumber, ayah.ayahNumber)?.let { raw ->
+                val scoped = if (scholar.key == "saadi") extractSaadiAyahSection(raw, edition.slug, ayah.ayahNumber) else raw
+                val plain = Html.fromHtml(scoped, Html.FROM_HTML_MODE_LEGACY).toString().trim()
+                if (plain.isNotBlank()) {
+                    val saved = ScholarTafseer(scholar.key, scholar.displayName, scholar.bookTitle, scholar.era, plain, emptyList(), "${edition.attribution}; offline copy")
+                    cache[cacheKey] = saved
+                    return@withContext saved
+                }
+            }
+        }
+        if (language == AppLanguage.URDU || language == AppLanguage.ENGLISH || language == AppLanguage.HINDI || language == AppLanguage.ARABIC) {
             readOffline(cacheKey)?.let {
                 cache[cacheKey] = it
                 return@withContext it
@@ -347,9 +451,7 @@ object QuranTafseerRepository {
                     translationNotice = if (needsMachineTranslation) machineTranslationNotice(language, edition.language) else ""
                 )
                 cache[cacheKey] = result
-                if (language == AppLanguage.URDU || language == AppLanguage.ENGLISH) {
-                    writeOffline(cacheKey, result)
-                }
+                writeOffline(cacheKey, result)
                 result
             }
         } catch (error: Exception) {
