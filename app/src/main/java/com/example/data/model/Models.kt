@@ -78,7 +78,7 @@ data class AyahTafseer(
 )
 
 data class ScholarTafseer(
-    val scholarKey: String, // "ibn_kathir", "maududi", "maariful_quran", "jalalayn", "saadi"
+    val scholarKey: String, // "ibn_kathir", "tabari", "qurtubi", "saadi", "maariful_quran"
     val authorName: String,
     val bookTitle: String,
     val eraAndCredentials: String,
