@@ -36,8 +36,7 @@ fun LiveStreamScreen(
     var serverIndex by remember { mutableIntStateOf(0) }
     var reloadKey by remember { mutableIntStateOf(0) }
 
-    // Official active stream servers for Makkah (Masjid al-Haram) verified on Saudi Quran TV
-    // Official active stream servers for Makkah & Madinah (from Harameyn Live Streams endpoint)
+    // Public live broadcast video IDs from the Saudi Quran TV and Sunnah TV channels. Stream availability can change.
     val makkahServers = listOf(
         StreamServer("eC4LfEVxvKg", "Saudi Quran TV (Official Makkah broadcast)"),
         StreamServer("vdvjUpl03q0", "Alternative Makkah stream"),
@@ -163,7 +162,7 @@ fun LiveStreamScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Active Broadcast Server",
+                                text = "Selected Broadcast Stream",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -265,7 +264,7 @@ fun LiveStreamScreen(
                                     )
                                 Spacer(modifier = Modifier.width(5.dp))
                                 Text(
-                                    text = "LIVE",
+                                    text = "FEED",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                                     color = Color.White
                                 )
@@ -283,13 +282,13 @@ fun LiveStreamScreen(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                     Text(
-                        text = "Official Broadcasting Service",
+                        text = "Saudi Broadcasting Channels",
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Broadcasted live directly inside Noor-e-Hidayat via the official Saudi Quran & Sunnah Television service. All streaming controls and playback occur 100% inside this application without opening any external browser or application.",
+                        text = "Embedded public broadcasts from Saudi Quran TV (Makkah) and Saudi Sunnah TV (Madinah). Streams may occasionally be unavailable or restarted by the broadcaster.",
                         style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
