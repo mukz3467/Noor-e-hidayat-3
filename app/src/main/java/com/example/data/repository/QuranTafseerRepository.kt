@@ -1,6 +1,10 @@
 package com.example.data.repository
 
 import android.text.Html
+import com.google.android.gms.tasks.Tasks
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.TranslatorOptions
 import com.example.data.model.AppLanguage
 import com.example.data.model.Ayah
 import com.example.data.model.AyahRevelationContext
@@ -31,7 +35,8 @@ object QuranTafseerRepository {
 
     private data class Edition(
         val slug: String,
-        val attribution: String
+        val attribution: String,
+        val language: AppLanguage
     )
 
     private val client = OkHttpClient.Builder()
@@ -80,40 +85,84 @@ object QuranTafseerRepository {
      */
     private fun editionFor(scholarKey: String, language: AppLanguage): Edition? = when (scholarKey) {
         "ibn_kathir" -> when (language) {
-            AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Urdu Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api")
-            AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api")
-            AppLanguage.ENGLISH -> Edition("en-tafisr-ibn-kathir", "English Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Urdu Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.URDU)
+            AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.ARABIC)
+            AppLanguage.ENGLISH -> Edition("en-tafisr-ibn-kathir", "English Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.ENGLISH)
             AppLanguage.HINDI -> null
         }
         "tabari" -> if (language == AppLanguage.ARABIC)
-            Edition("ar-tafsir-al-tabari", "Arabic Jami' al-Bayan by Imam al-Tabari; corpus mirror: spa5k/tafsir_api")
+            Edition("ar-tafsir-al-tabari", "Arabic Jami' al-Bayan by Imam al-Tabari; corpus mirror: spa5k/tafsir_api", AppLanguage.ARABIC)
         else null
         "qurtubi" -> if (language == AppLanguage.ARABIC)
-            Edition("ar-tafseer-al-qurtubi", "Arabic Al-Jami' li-Ahkam al-Qur'an by Imam al-Qurtubi; corpus mirror: spa5k/tafsir_api")
+            Edition("ar-tafseer-al-qurtubi", "Arabic Al-Jami' li-Ahkam al-Qur'an by Imam al-Qurtubi; corpus mirror: spa5k/tafsir_api", AppLanguage.ARABIC)
         else null
         "saadi" -> when (language) {
-            AppLanguage.URDU -> Edition("ur-tafsir-as-saadi-urdu", "Urdu Tafsir al-Sa'di; corpus mirror: spa5k/tafsir_api")
-            AppLanguage.ARABIC -> Edition("ar-tafsir-as-saadi", "Arabic Tafsir al-Sa'di; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.URDU -> Edition("ur-tafsir-as-saadi-urdu", "Urdu Tafsir al-Sa'di; corpus mirror: spa5k/tafsir_api", AppLanguage.URDU)
+            AppLanguage.ARABIC -> Edition("ar-tafsir-as-saadi", "Arabic Tafsir al-Sa'di; corpus mirror: spa5k/tafsir_api", AppLanguage.ARABIC)
             else -> null
         }
         "maariful_quran" -> if (language == AppLanguage.ENGLISH)
-            Edition("en-tafsir-maarif-ul-quran", "English Ma'ariful Qur'an by Mufti Muhammad Shafi; corpus mirror: spa5k/tafsir_api")
+            Edition("en-tafsir-maarif-ul-quran", "English Ma'ariful Qur'an by Mufti Muhammad Shafi; corpus mirror: spa5k/tafsir_api", AppLanguage.ENGLISH)
         else null
         else -> null
     }
 
     /**
-     * The al-Sa'di corpus mirror stores the complete surah commentary in every
-     * ayah JSON file. Extract the explicitly numbered paragraph so the reader
-     * never displays the whole surah as if it were one ayah's tafseer.
-     *
-     * The Urdu edition uses [1], [2]... markers; the Arabic edition uses {1}, {2}...
+     * A missing published target-language edition falls back to a verified source edition.
+     * Translation is performed locally and explicitly labelled as machine translation.
      */
-    private fun extractSaadiAyahSection(
-        rawText: String,
-        editionSlug: String,
-        ayahNumber: Int
-    ): String {
+    private fun sourceEditionFor(scholarKey: String): Edition? = when (scholarKey) {
+        "ibn_kathir", "tabari", "qurtubi", "saadi" -> editionFor(scholarKey, AppLanguage.ARABIC)
+        // The connected corpus contains the published English translation of Ma'ariful Qur'an.
+        "maariful_quran" -> editionFor(scholarKey, AppLanguage.ENGLISH)
+        else -> null
+    }
+
+    private fun mlKitLanguage(language: AppLanguage): String = when (language) {
+        AppLanguage.ARABIC -> TranslateLanguage.ARABIC
+        AppLanguage.ENGLISH -> TranslateLanguage.ENGLISH
+        AppLanguage.HINDI -> TranslateLanguage.HINDI
+        AppLanguage.URDU -> TranslateLanguage.URDU
+    }
+
+    private fun splitForTranslation(text: String, maxChars: Int = 3000): List<String> {
+        val chunks = mutableListOf<String>()
+        var start = 0
+        val boundaries = charArrayOf('\n', '۔', '؟', '.', '!', '?', ' ')
+        while (start < text.length) {
+            var end = minOf(start + maxChars, text.length)
+            if (end < text.length) {
+                val boundary = text.lastIndexOfAny(boundaries, end - 1)
+                if (boundary > start + maxChars / 2) end = boundary + 1
+            }
+            chunks += text.substring(start, end)
+            start = end
+        }
+        return chunks
+    }
+
+    private fun translateOnDevice(sourceText: String, sourceLanguage: AppLanguage, targetLanguage: AppLanguage): String {
+        if (sourceLanguage == targetLanguage) return sourceText
+        val options = TranslatorOptions.Builder()
+            .setSourceLanguage(mlKitLanguage(sourceLanguage))
+            .setTargetLanguage(mlKitLanguage(targetLanguage))
+            .build()
+        val translator = Translation.getClient(options)
+        try {
+            Tasks.await(translator.downloadModelIfNeeded())
+            return splitForTranslation(sourceText).joinToString(separator = "") { chunk ->
+                Tasks.await(translator.translate(chunk))
+            }.trim()
+        } finally {
+            translator.close()
+        }
+    }
+
+    /**
+     * The al-Sa'di mirror repeats the full surah text in every ayah file.
+     * Extract only the explicitly numbered paragraph for the requested ayah.
+     */
+    private fun extractSaadiAyahSection(rawText: String, editionSlug: String, ayahNumber: Int): String {
         val markerPattern = if (editionSlug.startsWith("ur-")) {
             Regex("(?m)^[\\t ]*\\[$ayahNumber\\][\\t ]*")
         } else {
@@ -129,9 +178,7 @@ object QuranTafseerRepository {
         val nextMarker = nextMarkerPattern.find(rawText, marker.range.last + 1)
         val sectionEnd = nextMarker?.range?.first ?: rawText.length
         val section = rawText.substring(marker.range.last + 1, sectionEnd).trim()
-        if (section.isBlank()) {
-            throw IllegalStateException("The al-Sa'di source section for ayah $ayahNumber is empty")
-        }
+        if (section.isBlank()) throw IllegalStateException("Empty al-Sa'di ayah section: $ayahNumber")
         return section
     }
 
@@ -152,7 +199,8 @@ object QuranTafseerRepository {
     ): ScholarTafseer = withContext(Dispatchers.IO) {
         val scholar = getTop5Scholars(language).firstOrNull { it.key == scholarKey }
             ?: getTop5Scholars(language).first()
-        val edition = editionFor(scholar.key, language)
+        val publishedEdition = editionFor(scholar.key, language)
+        val edition = publishedEdition ?: sourceEditionFor(scholar.key)
         if (edition == null) {
             return@withContext ScholarTafseer(
                 scholarKey = scholar.key,
@@ -161,11 +209,11 @@ object QuranTafseerRepository {
                 eraAndCredentials = scholar.era,
                 tafseerText = unavailable(language, scholar.key),
                 keyPoints = emptyList(),
-                sourceAttribution = "Source edition not available for this language; no substitute text used."
+                sourceAttribution = "No verified source edition is connected."
             )
         }
 
-        val cacheKey = "${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}"
+        val cacheKey = "${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}/${language.code}"
         cache[cacheKey]?.let { return@withContext it }
 
         try {
@@ -191,14 +239,19 @@ object QuranTafseerRepository {
                 }
                 val plainText = Html.fromHtml(ayahScopedText, Html.FROM_HTML_MODE_LEGACY).toString().trim()
                 if (plainText.isBlank()) throw IllegalStateException("Source text is empty after decoding")
+                val needsMachineTranslation = publishedEdition == null
+                val displayedText = if (needsMachineTranslation) translateOnDevice(plainText, edition.language, language) else plainText
+                if (displayedText.isBlank()) throw IllegalStateException("Translated tafseer is empty")
                 val result = ScholarTafseer(
                     scholarKey = scholar.key,
                     authorName = scholar.displayName,
                     bookTitle = scholar.bookTitle,
                     eraAndCredentials = scholar.era,
-                    tafseerText = plainText,
+                    tafseerText = displayedText,
                     keyPoints = emptyList(),
-                    sourceAttribution = edition.attribution
+                    sourceAttribution = if (needsMachineTranslation) "${edition.attribution}; on-device machine translation from ${edition.language.displayName} to ${language.displayName}. Not a published translation." else edition.attribution,
+                    isMachineTranslated = needsMachineTranslation,
+                    translationNotice = if (needsMachineTranslation) "Machine-translated from the verified ${edition.language.displayName} source. Translation can contain errors; compare with the original for scholarly study." else ""
                 )
                 cache[cacheKey] = result
                 result
@@ -216,7 +269,8 @@ object QuranTafseerRepository {
                     AppLanguage.ENGLISH -> "Could not load commentary from the verified source. Check your internet connection and try again."
                 },
                 keyPoints = emptyList(),
-                sourceAttribution = "Source request failed: ${error.message ?: "unknown error"}"
+                sourceAttribution = "Source request/translation failed: ${error.message ?: "unknown error"}",
+                isMachineTranslated = false
             )
         }
     }
