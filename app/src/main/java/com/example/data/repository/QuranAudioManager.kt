@@ -207,6 +207,7 @@ object QuranAudioManager {
                     r.play()
                     Toast.makeText(context, "🔊 $azanTitle", Toast.LENGTH_LONG).show()
                 } catch (_: Exception) {}
+                onCompletion()
             }
         )
     }
