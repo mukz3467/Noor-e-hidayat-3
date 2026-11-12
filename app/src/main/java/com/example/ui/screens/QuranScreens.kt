@@ -361,6 +361,8 @@ fun QuranReaderScreen(
     var translationSheetLanguage by remember { mutableStateOf(language) }
     var tafseerSheetLanguage by remember { mutableStateOf(language) }
     var selectedScholarKey by remember { mutableStateOf("ibn_kathir") }
+    var loadedScholarTafseer by remember { mutableStateOf<ScholarTafseer?>(null) }
+    var isTafseerLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(language) {
         translationSheetLanguage = language
@@ -876,13 +878,24 @@ fun QuranReaderScreen(
             val scholars = remember(tafseerSheetLanguage) {
                 QuranTafseerRepository.getTop5Scholars(tafseerSheetLanguage)
             }
-            val activeScholarTafseer = remember(curAyah.surahNumber, curAyah.ayahNumber, selectedScholarKey, tafseerSheetLanguage) {
-                QuranTafseerRepository.getScholarTafseer(
+            LaunchedEffect(curAyah.surahNumber, curAyah.ayahNumber, selectedScholarKey, tafseerSheetLanguage) {
+                isTafseerLoading = true
+                loadedScholarTafseer = null
+                loadedScholarTafseer = QuranTafseerRepository.getScholarTafseer(
                     ayah = curAyah,
                     scholarKey = selectedScholarKey,
                     language = tafseerSheetLanguage
                 )
+                isTafseerLoading = false
             }
+            val activeScholarTafseer = loadedScholarTafseer ?: ScholarTafseer(
+                scholarKey = selectedScholarKey,
+                authorName = scholars.firstOrNull { it.key == selectedScholarKey }?.displayName.orEmpty(),
+                bookTitle = scholars.firstOrNull { it.key == selectedScholarKey }?.bookTitle.orEmpty(),
+                eraAndCredentials = "",
+                tafseerText = "",
+                keyPoints = emptyList()
+            )
 
             ModalBottomSheet(
                 onDismissRequest = { activeTafseerAyah = null }
@@ -1034,6 +1047,27 @@ fun QuranReaderScreen(
                         }
                     }
 
+                    if (isTafseerLoading) {
+                        item {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                                Text(
+                                    text = when (tafseerSheetLanguage) {
+                                        AppLanguage.URDU -> "مستند ماخذ سے اصل تفسیر حاصل کی جا رہی ہے…"
+                                        AppLanguage.ARABIC -> "جارٍ تحميل نص التفسير من المصدر…"
+                                        AppLanguage.HINDI -> "प्रमाणित स्रोत से मूल तफ़सीर लोड हो रही है…"
+                                        AppLanguage.ENGLISH -> "Loading original commentary from the cited source…"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+
                     // One-Page Detailed Scholarly Tafseer Commentary
                     item {
                         Card(
@@ -1076,6 +1110,17 @@ fun QuranReaderScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+                    }
+
+                    if (!isTafseerLoading && activeScholarTafseer.sourceAttribution.isNotBlank()) {
+                        item {
+                            Text(
+                                text = "Source: ${activeScholarTafseer.sourceAttribution}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                            )
                         }
                     }
 
