@@ -182,6 +182,12 @@ object QuranTafseerRepository {
         return section
     }
 
+    private fun machineTranslationNotice(language: AppLanguage, sourceLanguage: AppLanguage): String = when (language) {
+        AppLanguage.URDU -> "یہ Google ML Kit کے ذریعے ${sourceLanguage.displayName} سے مشینی ترجمہ ہے، شائع شدہ یا عالم کی منظور شدہ ترجمانی نہیں۔ علمی مطالعے کے لیے اصل متن سے موازنہ کریں۔"
+        AppLanguage.ARABIC -> "هذه ترجمة آلية عبر Google ML Kit من ${sourceLanguage.displayName}، وليست ترجمة منشورة أو معتمدة من المؤلف. قارنها بالنص الأصلي عند الدراسة العلمية."
+        AppLanguage.HINDI -> "यह Google ML Kit द्वारा ${sourceLanguage.displayName} से किया गया मशीन अनुवाद है; यह प्रकाशित या लेखक द्वारा अनुमोदित अनुवाद नहीं है। अध्ययन के लिए मूल पाठ से मिलान करें।"
+        AppLanguage.ENGLISH -> "Machine-translated by Google ML Kit from the ${sourceLanguage.displayName} source. This is not a published or scholar-approved translation; compare with the original for study."
+    }
     private fun unavailable(language: AppLanguage, scholarKey: String): String {
         val message = when (language) {
             AppLanguage.URDU -> "اس عالم کی اس زبان میں آیت وار مستند تفسیر کا تصدیق شدہ متن دستیاب نہیں۔ اس لیے کوئی وضاحتی متن ان کے نام سے منسوب نہیں کیا گیا۔"
@@ -251,7 +257,7 @@ object QuranTafseerRepository {
                     keyPoints = emptyList(),
                     sourceAttribution = if (needsMachineTranslation) "${edition.attribution}; on-device machine translation from ${edition.language.displayName} to ${language.displayName}. Not a published translation." else edition.attribution,
                     isMachineTranslated = needsMachineTranslation,
-                    translationNotice = if (needsMachineTranslation) "Machine-translated from the verified ${edition.language.displayName} source. Translation can contain errors; compare with the original for scholarly study." else ""
+                    translationNotice = if (needsMachineTranslation) machineTranslationNotice(language, edition.language) else ""
                 )
                 cache[cacheKey] = result
                 result
