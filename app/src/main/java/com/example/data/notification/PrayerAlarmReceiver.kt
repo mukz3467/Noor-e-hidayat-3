@@ -24,7 +24,7 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
         PrayerNotificationManager.postPrayerNotification(context, prayerName, sound, vibration, id.hashCode())
         PrayerNotificationManager.onAlarmDelivered(context, id)
 
-        if (sound != "silent") AdhanPlaybackService.start(context, sound)
+        if (sound != "silent" && sound != "system") AdhanPlaybackService.start(context, sound)
     }
 
     companion object {
