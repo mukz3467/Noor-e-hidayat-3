@@ -83,7 +83,8 @@ data class ScholarTafseer(
     val bookTitle: String,
     val eraAndCredentials: String,
     val tafseerText: String,
-    val keyPoints: List<String>
+    val keyPoints: List<String>,
+    val sourceAttribution: String = ""
 )
 
 data class AyahRevelationContext(
