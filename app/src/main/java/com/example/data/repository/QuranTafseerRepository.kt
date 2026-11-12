@@ -111,11 +111,22 @@ object QuranTafseerRepository {
      * A missing published target-language edition falls back to a verified source edition.
      * Translation is performed locally and explicitly labelled as machine translation.
      */
-    private fun sourceEditionFor(scholarKey: String): Edition? = when (scholarKey) {
-        "ibn_kathir", "tabari", "qurtubi", "saadi" -> editionFor(scholarKey, AppLanguage.ARABIC)
-        // The connected corpus contains the published English translation of Ma'ariful Qur'an.
-        "maariful_quran" -> editionFor(scholarKey, AppLanguage.ENGLISH)
-        else -> null
+    /**
+     * Choose a real published source edition before translating. For Hindi, prefer
+     * Urdu/English editions; for Arabic, keep a published Arabic edition when one
+     * exists, otherwise use Urdu/English. If a scholar has no connected Urdu/English
+     * edition, fall back only to the connected Arabic edition and disclose its source.
+     */
+    private fun sourceEditionFor(scholarKey: String, targetLanguage: AppLanguage): Edition? {
+        val preferredLanguages = when (targetLanguage) {
+            AppLanguage.HINDI -> listOf(AppLanguage.URDU, AppLanguage.ENGLISH, AppLanguage.ARABIC)
+            AppLanguage.ARABIC -> listOf(AppLanguage.ARABIC, AppLanguage.URDU, AppLanguage.ENGLISH)
+            AppLanguage.URDU -> listOf(AppLanguage.URDU, AppLanguage.ENGLISH, AppLanguage.ARABIC)
+            AppLanguage.ENGLISH -> listOf(AppLanguage.ENGLISH, AppLanguage.URDU, AppLanguage.ARABIC)
+        }
+        return preferredLanguages.firstNotNullOfOrNull { sourceLanguage ->
+            editionFor(scholarKey, sourceLanguage)
+        }
     }
 
     private fun mlKitLanguage(language: AppLanguage): String = when (language) {
@@ -206,7 +217,7 @@ object QuranTafseerRepository {
         val scholar = getTop5Scholars(language).firstOrNull { it.key == scholarKey }
             ?: getTop5Scholars(language).first()
         val publishedEdition = editionFor(scholar.key, language)
-        val edition = publishedEdition ?: sourceEditionFor(scholar.key)
+        val edition = publishedEdition ?: sourceEditionFor(scholar.key, language)
         if (edition == null) {
             return@withContext ScholarTafseer(
                 scholarKey = scholar.key,
@@ -245,7 +256,7 @@ object QuranTafseerRepository {
                 }
                 val plainText = Html.fromHtml(ayahScopedText, Html.FROM_HTML_MODE_LEGACY).toString().trim()
                 if (plainText.isBlank()) throw IllegalStateException("Source text is empty after decoding")
-                val needsMachineTranslation = publishedEdition == null
+                val needsMachineTranslation = edition.language != language
                 val displayedText = if (needsMachineTranslation) translateOnDevice(plainText, edition.language, language) else plainText
                 if (displayedText.isBlank()) throw IllegalStateException("Translated tafseer is empty")
                 val result = ScholarTafseer(
