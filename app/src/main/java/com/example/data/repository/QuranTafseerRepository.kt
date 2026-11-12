@@ -122,8 +122,7 @@ object QuranTafseerRepository {
                             if (!response.isSuccessful) throw IllegalStateException("${source.label}, سورۃ $surah: HTTP ${response.code}")
                             response.body?.string().orEmpty()
                         }
-                        val json = JSONObject(body)
-                        val ayahs = json.optJSONArray("ayahs") ?: throw IllegalStateException("${source.label}: سورۃ $surah کا ڈیٹا موجود نہیں")
+                        val ayahs = JSONArray(body)
                         val expected = QuranData.surahs.first { it.number == surah }.ayahCount
                         if (ayahs.length() != expected) throw IllegalStateException("${source.label}, سورۃ $surah: ${ayahs.length()}/$expected آیات ملیں")
                         for (index in 0 until ayahs.length()) {
@@ -133,7 +132,7 @@ object QuranTafseerRepository {
                             }
                         }
                         val temp = File(dir, "$surah.json.tmp")
-                        temp.writeText(json.toString(), Charsets.UTF_8)
+                        temp.writeText(ayahs.toString(), Charsets.UTF_8)
                         if (target.exists()) target.delete()
                         if (!temp.renameTo(target)) throw IllegalStateException("فائل محفوظ نہیں ہو سکی")
                         completed++
