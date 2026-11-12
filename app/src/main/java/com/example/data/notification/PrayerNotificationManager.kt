@@ -147,7 +147,9 @@ object PrayerNotificationManager {
 
     fun restoreScheduledAlarms(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val future = readEntries(prefs).filter {
+        val saved = readEntries(prefs)
+        saved.forEach { cancelAlarm(context, it.id) }
+        val future = saved.filter {
             it.prayerTimeMillis - _settings.value.leadTimeMinutes * 60_000L > System.currentTimeMillis()
         }
         saveEntries(prefs, future)
@@ -247,6 +249,6 @@ object PrayerNotificationManager {
     fun sendTestNotification(context: Context, prayerName: String = "Asr", prayerTime: String = "04:15 PM") {
         init(context)
         postPrayerNotification(context, prayerName, _settings.value.adhanSound, _settings.value.vibrationEnabled, 101)
-        if (_settings.value.adhanSound != "silent") AdhanPlaybackService.start(context, _settings.value.adhanSound)
+        if (_settings.value.adhanSound != "silent" && _settings.value.adhanSound != "system") AdhanPlaybackService.start(context, _settings.value.adhanSound)
     }
 }
