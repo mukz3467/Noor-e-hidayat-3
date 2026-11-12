@@ -264,7 +264,7 @@ object IslamicCalendarRepository {
 
         // Epoch of Islamic Calendar: July 16, 622 CE = JD 1948439.5
         // Apply manual adjustment & regional Pakistan moon-sighting offset
-        val effectiveOffset = manualOffsetDays + if (_usePakistanOfficial.value) getPakistanRuetOffset(year, month) else 0
+        val effectiveOffset = manualOffsetDays
         val adjustedJd = jd + effectiveOffset
 
         val l = adjustedJd - 1948439.5 + 10632.0
@@ -281,11 +281,7 @@ object IslamicCalendarRepository {
         val validMonth = ((hijriMonth - 1).coerceIn(0, 11))
         val validDay = hijriDay.coerceIn(1, 30)
 
-        val source = if (_usePakistanOfficial.value) {
-            "Central Ruet-e-Hilal Committee Pakistan (with local adjustment)"
-        } else {
-            "Astronomical Tabular / Umm Al-Qura Standard Calculation"
-        }
+        val source = "Astronomical tabular estimate; not an official Pakistan moon-sighting confirmation. Local Ruet-e-Hilal announcements may differ."
 
         return HijriDate(
             day = validDay,
@@ -294,14 +290,9 @@ object IslamicCalendarRepository {
             monthNameUr = HIJRI_MONTHS_UR[validMonth],
             monthNameAr = HIJRI_MONTHS_AR[validMonth],
             year = hijriYear,
-            isConfirmedByRuetHilal = _usePakistanOfficial.value,
+            isConfirmedByRuetHilal = false,
             sourceDescription = source
         )
-    }
-
-    private fun getPakistanRuetOffset(year: Int, month: Int): Int {
-        // Pakistan is typically 1 day behind Saudi Arabia / astronomical calculation due to moon-sighting horizon
-        return -1
     }
 
     fun getFormattedHijriDate(calendar: Calendar, manualOffsetDays: Int = _manualAdjustmentDays.value): String {
