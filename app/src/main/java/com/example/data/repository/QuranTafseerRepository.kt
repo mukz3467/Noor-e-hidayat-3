@@ -1,17 +1,26 @@
 package com.example.data.repository
 
+import android.text.Html
 import com.example.data.model.AppLanguage
 import com.example.data.model.Ayah
 import com.example.data.model.AyahRevelationContext
 import com.example.data.model.ScholarTafseer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /**
- * Never generate commentary and attribute it to a named scholar.
- * Verified source editions and ayah-specific asbab al-nuzul reports must be bundled
- * with precise source metadata before being displayed as scholarly material.
+ * Loads unchanged, verse-indexed source commentary. Never invents or paraphrases tafseer
+ * and never attributes another author's work to a selected scholar.
+ *
+ * Upstream corpus: spa5k/tafsir_api, which indexes editions from Quran.com and
+ * the Quranic Universal Library (Tarteel). Text is fetched by exact surah/ayah.
  */
 object QuranTafseerRepository {
-
     data class ScholarInfo(
         val key: String,
         val displayName: String,
@@ -19,6 +28,19 @@ object QuranTafseerRepository {
         val era: String,
         val methodologyBadge: String
     )
+
+    private data class Edition(
+        val slug: String,
+        val attribution: String
+    )
+
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(12, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .callTimeout(25, TimeUnit.SECONDS)
+        .build()
+
+    private val cache = ConcurrentHashMap<String, ScholarTafseer>()
 
     fun getTop5Scholars(language: AppLanguage): List<ScholarInfo> = when (language) {
         AppLanguage.URDU -> listOf(
@@ -51,27 +73,110 @@ object QuranTafseerRepository {
         )
     }
 
-    private fun unavailable(language: AppLanguage): String = when (language) {
-        AppLanguage.URDU -> "اس آیت کی مستند، اصل تفسیر کا متن اس ایپ کے آف لائن ڈیٹا میں موجود نہیں۔ تصدیق شدہ ماخذ شامل ہونے تک اسے کسی عالم کی طرف منسوب نہیں کیا جائے گا۔"
-        AppLanguage.ARABIC -> "النص الأصلي الموثق لتفسير هذه الآية غير متوفر ضمن بيانات التطبيق. لن ننسب شرحاً مولداً إلى عالم."
-        AppLanguage.HINDI -> "इस आयत की प्रमाणित मूल तफ़सीर ऐप के ऑफ़लाइन डेटा में उपलब्ध नहीं है। किसी सामान्य व्याख्या को विद्वान के नाम से नहीं जोड़ा जाएगा।"
-        AppLanguage.ENGLISH -> "The verified original commentary for this ayah is not bundled offline. Generated explanations will not be attributed to a named scholar."
+    private fun editionFor(scholarKey: String, language: AppLanguage): Edition? = when (scholarKey) {
+        "ibn_kathir" -> when (language) {
+            AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Original Urdu edition indexed from Quran.com; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic edition indexed from Quranic Universal Library (Tarteel); corpus mirror: spa5k/tafsir_api")
+            AppLanguage.ENGLISH -> Edition("en-tafisr-ibn-kathir", "English edition indexed from Quranic Universal Library (Tarteel); corpus mirror: spa5k/tafsir_api")
+            AppLanguage.HINDI -> null
+        }
+        "maududi" -> null // Tafhim-ul-Qur'an is not present in the verified verse-indexed corpus used here.
+        "maariful_quran" -> if (language == AppLanguage.ENGLISH)
+            Edition("en-tafsir-maarif-ul-quran", "Ma'arif-ul-Qur'an, Mufti Muhammad Shafi; edition indexed from Quranic Universal Library (Tarteel)")
+        else null
+        "jalalayn" -> when (language) {
+            AppLanguage.ARABIC -> Edition("ar-tafsir-al-jalalayn", "Arabic Tafsir al-Jalalayn edition; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.ENGLISH -> Edition("en-al-jalalayn", "English Tafsir al-Jalalayn edition indexed from altafsir.com; corpus mirror: spa5k/tafsir_api")
+            else -> null
+        }
+        "saadi" -> when (language) {
+            AppLanguage.URDU -> Edition("ur-tafsir-as-saadi-urdu", "Tafsir al-Sa'di Urdu, indexed from Quranic Universal Library (Tarteel)")
+            AppLanguage.ARABIC -> Edition("ar-tafsir-as-saadi", "Tafsir al-Sa'di Arabic, indexed from Quranic Universal Library (Tarteel)")
+            else -> null
+        }
+        else -> null
     }
 
-    fun getScholarTafseer(ayah: Ayah, scholarKey: String, language: AppLanguage): ScholarTafseer {
+    private fun unavailable(language: AppLanguage, scholarKey: String): String {
+        val message = when (language) {
+            AppLanguage.URDU -> "اس عالم کی اس زبان میں آیت وار مستند تفسیر کا تصدیق شدہ متن دستیاب نہیں۔ اس لیے کوئی وضاحتی متن ان کے نام سے منسوب نہیں کیا گیا۔"
+            AppLanguage.ARABIC -> "لا يتوفر نص موثق لتفسير هذا العالم بهذه اللغة على مستوى الآية؛ لذلك لم تُنسب إليه أي كتابة تفسيرية."
+            AppLanguage.HINDI -> "इस भाषा में इस विद्वान की आयत-दर-आयत प्रमाणित तफ़सीर उपलब्ध नहीं है। इसलिए कोई व्याख्या उनके नाम से नहीं जोड़ी गई।"
+            AppLanguage.ENGLISH -> "A verified ayah-indexed edition in this language is not available in the connected source. No generated explanation is attributed to this scholar."
+        }
+        return if (scholarKey == "maududi") message else message
+    }
+
+    suspend fun getScholarTafseer(
+        ayah: Ayah,
+        scholarKey: String,
+        language: AppLanguage
+    ): ScholarTafseer = withContext(Dispatchers.IO) {
         val scholar = getTop5Scholars(language).firstOrNull { it.key == scholarKey }
             ?: getTop5Scholars(language).first()
-        return ScholarTafseer(
-            scholarKey = scholar.key,
-            authorName = scholar.displayName,
-            bookTitle = scholar.bookTitle,
-            eraAndCredentials = scholar.era,
-            tafseerText = unavailable(language),
-            keyPoints = emptyList()
-        )
+        val edition = editionFor(scholar.key, language)
+        if (edition == null) {
+            return@withContext ScholarTafseer(
+                scholarKey = scholar.key,
+                authorName = scholar.displayName,
+                bookTitle = scholar.bookTitle,
+                eraAndCredentials = scholar.era,
+                tafseerText = unavailable(language, scholar.key),
+                keyPoints = emptyList(),
+                sourceAttribution = "Source edition not available for this language; no substitute text used."
+            )
+        }
+
+        val cacheKey = "${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}"
+        cache[cacheKey]?.let { return@withContext it }
+
+        try {
+            val url = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}.json"
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", "Noor-e-Hidayat/1.0 (Quran study app)")
+                .get()
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IllegalStateException("Tafseer source returned HTTP ${response.code}")
+                val json = JSONObject(response.body?.string().orEmpty())
+                val rawText = json.optString("text").trim()
+                if (rawText.isBlank() || rawText == "null") {
+                    throw IllegalStateException("No source text exists for this ayah in this edition")
+                }
+                val plainText = Html.fromHtml(rawText, Html.FROM_HTML_MODE_LEGACY).toString().trim()
+                if (plainText.isBlank()) throw IllegalStateException("Source text is empty after decoding")
+                val result = ScholarTafseer(
+                    scholarKey = scholar.key,
+                    authorName = scholar.displayName,
+                    bookTitle = scholar.bookTitle,
+                    eraAndCredentials = scholar.era,
+                    tafseerText = plainText,
+                    keyPoints = emptyList(),
+                    sourceAttribution = edition.attribution
+                )
+                cache[cacheKey] = result
+                result
+            }
+        } catch (error: Exception) {
+            ScholarTafseer(
+                scholarKey = scholar.key,
+                authorName = scholar.displayName,
+                bookTitle = scholar.bookTitle,
+                eraAndCredentials = scholar.era,
+                tafseerText = when (language) {
+                    AppLanguage.URDU -> "مستند ماخذ سے تفسیر حاصل نہیں ہو سکی۔ انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔"
+                    AppLanguage.ARABIC -> "تعذر تحميل التفسير من المصدر الموثق. تحقق من الاتصال ثم أعد المحاولة."
+                    AppLanguage.HINDI -> "प्रमाणित स्रोत से तफ़सीर लोड नहीं हो सकी। इंटरनेट जाँचकर पुनः प्रयास करें।"
+                    AppLanguage.ENGLISH -> "Could not load commentary from the verified source. Check your internet connection and try again."
+                },
+                keyPoints = emptyList(),
+                sourceAttribution = "Source request failed: ${error.message ?: "unknown error"}"
+            )
+        }
     }
 
-    fun getScholarTafseer(
+    suspend fun getScholarTafseer(
         surahNumber: Int,
         ayahNumber: Int,
         scholarKey: String,
@@ -83,7 +188,7 @@ object QuranTafseerRepository {
     }
 
     fun getRevelationContext(ayah: Ayah, language: AppLanguage): AyahRevelationContext {
-        val message = when (language) {
+        val unavailable = when (language) {
             AppLanguage.URDU -> "اس مخصوص آیت کے سببِ نزول کی مستند روایت آف لائن ڈیٹا میں موجود نہیں۔ غیر مصدقہ سببِ نزول بیان نہیں کیا جائے گا۔"
             AppLanguage.ARABIC -> "لا تتوفر رواية موثقة لسبب نزول هذه الآية في البيانات المحلية؛ لذلك لن نذكر سبباً غير مثبت."
             AppLanguage.HINDI -> "इस आयत के विशेष कारण-ए-नुज़ूल का प्रमाणित संदर्भ ऑफ़लाइन डेटा में उपलब्ध नहीं है। अप्रमाणित विवरण नहीं दिया जाएगा।"
@@ -96,7 +201,7 @@ object QuranTafseerRepository {
             AppLanguage.HINDI -> if (surah?.revelationType?.name == "MAKKI") "सूरह को मक्की वर्गीकृत किया गया है; इससे इस आयत का सटीक समय प्रमाणित नहीं होता।" else "सूरह को मदनी वर्गीकृत किया गया है; इससे इस आयत का सटीक समय प्रमाणित नहीं होता।"
             AppLanguage.ENGLISH -> if (surah?.revelationType?.name == "MAKKI") "The surah is classified as Makki; that alone does not establish this ayah's exact revelation occasion." else "The surah is classified as Madani; that alone does not establish this ayah's exact revelation occasion."
         }
-        return AyahRevelationContext(message, period, unavailable(language), unavailable(language))
+        return AyahRevelationContext(unavailable, period, unavailable, unavailable)
     }
 
     fun getRevelationContext(surahNumber: Int, ayahNumber: Int, language: AppLanguage): AyahRevelationContext {
