@@ -312,21 +312,18 @@ fun CalendarView(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (usePakistanOfficial) "Pakistan Ruet-e-Hilal Convention" else "Astronomical Umm Al-Qura Standard",
+                                text = "Astronomical tabular estimate",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = if (usePakistanOfficial) "Matches official Central Ruet-e-Hilal Committee announcements" else "Pure astronomical calculation without local sighting",
+                                text = "No live official Pakistan moon-sighting data is bundled. Confirm dates with local announcements.",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
-                        Switch(
-                            checked = usePakistanOfficial,
-                            onCheckedChange = { onSourceToggle(it) }
-                        )
+                        // Official sighting mode is intentionally not offered without verified data.
                     }
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
@@ -343,7 +340,7 @@ fun CalendarView(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = if (manualAdjustment == 0) "No adjustment (Official date)" else "${if (manualAdjustment > 0) "+$manualAdjustment" else "$manualAdjustment"} day(s)",
+                                text = if (manualAdjustment == 0) "No manual adjustment" else "${if (manualAdjustment > 0) "+$manualAdjustment" else "$manualAdjustment"} day(s)",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
