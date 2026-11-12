@@ -278,8 +278,13 @@ object QuranTafseerRepository {
     ): ScholarTafseer = withContext(Dispatchers.IO) {
         val scholar = getTop5Scholars(language).firstOrNull { it.key == scholarKey }
             ?: getTop5Scholars(language).first()
-        val publishedEdition = editionFor(scholar.key, language)
-        val edition = publishedEdition ?: sourceEditionFor(scholar.key, language)
+        // Urdu is the canonical source shown in this reader. Non-Urdu choices
+        // always translate that same Urdu edition instead of silently switching books.
+        val edition = if (language == AppLanguage.URDU) {
+            editionFor(scholar.key, AppLanguage.URDU)
+        } else {
+            sourceEditionFor(scholar.key, language)
+        }
         if (edition == null) {
             return@withContext ScholarTafseer(
                 scholarKey = scholar.key,
