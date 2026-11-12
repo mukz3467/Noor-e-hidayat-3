@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import org.json.JSONArray
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -104,7 +105,7 @@ object QuranTafseerRepository {
                         val target = File(dir, "$surah.json")
                         if (target.exists()) {
                             try {
-                                val old = JSONObject(target.readText(Charsets.UTF_8)).optJSONArray("ayahs")
+                                val old = JSONArray(target.readText(Charsets.UTF_8))
                                 val expected = QuranData.surahs.first { it.number == surah }.ayahCount
                                 if (old != null && old.length() == expected &&
                                     (0 until old.length()).all { old.optJSONObject(it)?.optString("text")?.isNotBlank() == true }) {
@@ -151,7 +152,7 @@ object QuranTafseerRepository {
             val context = appContext ?: return null
             val file = File(editionDir(context, slug), "$surah.json")
             if (!file.exists()) return null
-            val list = JSONObject(file.readText(Charsets.UTF_8)).optJSONArray("ayahs") ?: return null
+            val list = JSONArray(file.readText(Charsets.UTF_8))
             (0 until list.length()).firstNotNullOfOrNull { index ->
                 val item = list.optJSONObject(index)
                 if (item?.optInt("ayah") == ayah) item.optString("text").takeIf { it.isNotBlank() } else null
