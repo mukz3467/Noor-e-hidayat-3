@@ -45,55 +45,60 @@ object QuranTafseerRepository {
     fun getTop5Scholars(language: AppLanguage): List<ScholarInfo> = when (language) {
         AppLanguage.URDU -> listOf(
             ScholarInfo("ibn_kathir", "حافظ ابن کثیر", "تفسیر القرآن العظیم", "وفات ۷۷۴ھ", "حدیث و آثار"),
-            ScholarInfo("maududi", "سید ابوالاعلیٰ مودودی", "تفہیم القرآن", "وفات ۱۳۹۹ھ", "موضوعاتی تفسیر"),
-            ScholarInfo("maariful_quran", "مفتی محمد شفیع عثمانی", "معارف القرآن", "وفات ۱۳۹۶ھ", "فقہی و لغوی"),
-            ScholarInfo("jalalayn", "امام جلال الدین محلی و امام سیوطی", "تفسیر الجلالین", "وفات ۸۶۴ھ / ۹۱۱ھ", "مختصر لغوی"),
-            ScholarInfo("saadi", "شیخ عبدالرحمن السعدی", "تیسیر الکریم الرحمن", "وفات ۱۳۷۶ھ", "آسان تشریح")
+            ScholarInfo("tabari", "امام طبری", "جامع البیان عن تأویل آی القرآن", "وفات ۳۱۰ھ", "روایت و لغت"),
+            ScholarInfo("qurtubi", "امام قرطبی", "الجامع لأحکام القرآن", "وفات ۶۷۱ھ", "فقہ و احکام"),
+            ScholarInfo("saadi", "شیخ عبدالرحمن السعدی", "تیسیر الکریم الرحمن", "وفات ۱۳۷۶ھ", "آسان تشریح"),
+            ScholarInfo("maariful_quran", "مفتی محمد شفیع", "معارف القرآن", "وفات ۱۳۹۶ھ", "فقہی و لغوی")
         )
         AppLanguage.ARABIC -> listOf(
             ScholarInfo("ibn_kathir", "ابن كثير", "تفسير القرآن العظيم", "توفي ٧٧٤هـ", "بالمأثور"),
-            ScholarInfo("maududi", "أبو الأعلى المودودي", "تفهيم القرآن", "توفي ١٣٩٩هـ", "موضوعي"),
-            ScholarInfo("maariful_quran", "محمد شفيع العثماني", "معارف القرآن", "توفي ١٣٩٦هـ", "فقهي ولغوي"),
-            ScholarInfo("jalalayn", "المحلي والسيوطي", "تفسير الجلالين", "توفي ٨٦٤هـ / ٩١١هـ", "لغوي موجز"),
-            ScholarInfo("saadi", "عبد الرحمن السعدي", "تيسير الكريم الرحمن", "توفي ١٣٧٦هـ", "تفسير ميسر")
+            ScholarInfo("tabari", "الإمام الطبري", "جامع البيان عن تأويل آي القرآن", "توفي ٣١٠هـ", "الرواية واللغة"),
+            ScholarInfo("qurtubi", "الإمام القرطبي", "الجامع لأحكام القرآن", "توفي ٦٧١هـ", "فقه وأحكام"),
+            ScholarInfo("saadi", "عبد الرحمن السعدي", "تيسير الكريم الرحمن", "توفي ١٣٧٦هـ", "تفسير ميسر"),
+            ScholarInfo("maariful_quran", "مفتي محمد شفيع", "معارف القرآن", "توفي ١٣٩٦هـ", "فقهي ولغوي")
         )
         AppLanguage.HINDI -> listOf(
             ScholarInfo("ibn_kathir", "इब्ने कसीर", "तफ़सीरुल क़ुरआनिल अज़ीम", "मृत्यु 774 हिजरी", "हदीस व आसार"),
-            ScholarInfo("maududi", "अबुल आला मौदूदी", "तफ़हीमुल क़ुरआन", "मृत्यु 1399 हिजरी", "विषयगत"),
-            ScholarInfo("maariful_quran", "मुहम्मद शफ़ी उसमानी", "मआरिफ़ुल क़ुरआन", "मृत्यु 1396 हिजरी", "फ़िक़्ही"),
-            ScholarInfo("jalalayn", "अल-महल्लि व अस-सुयूती", "तफ़सीर अल-जलालैन", "मृत्यु 864 / 911 हिजरी", "भाषाई"),
-            ScholarInfo("saadi", "अब्दुर रहमान अस-सादी", "तयसिरुल करीमुर रहमान", "मृत्यु 1376 हिजरी", "सरल व्याख्या")
+            ScholarInfo("tabari", "इमाम तबरी", "जामिउल बयान", "मृत्यु 310 हिजरी", "रिवायत व भाषा"),
+            ScholarInfo("qurtubi", "इमाम कुर्तुबी", "अल-जामिअ लि-अहकामिल क़ुरआन", "मृत्यु 671 हिजरी", "फ़िक़्ह व अहकाम"),
+            ScholarInfo("saadi", "अब्दुर रहमान अस-सादी", "तयसिरुल करीमुर रहमान", "मृत्यु 1376 हिजरी", "सरल व्याख्या"),
+            ScholarInfo("maariful_quran", "मुफ़्ती मुहम्मद शफ़ी", "मआरिफ़ुल क़ुरआन", "मृत्यु 1396 हिजरी", "फ़िक़्ही व भाषाई")
         )
         AppLanguage.ENGLISH -> listOf(
             ScholarInfo("ibn_kathir", "Ibn Kathir", "Tafsir al-Qur'an al-Azim", "d. 774 AH", "Hadith-based"),
-            ScholarInfo("maududi", "Abul A'la Maududi", "Tafhim al-Qur'an", "d. 1399 AH", "Thematic"),
-            ScholarInfo("maariful_quran", "Mufti Muhammad Shafi", "Ma'ariful Qur'an", "d. 1396 AH", "Fiqh and language"),
-            ScholarInfo("jalalayn", "Al-Mahalli and Al-Suyuti", "Tafsir al-Jalalayn", "d. 864 / 911 AH", "Concise linguistic"),
-            ScholarInfo("saadi", "Abdur Rahman al-Sa'di", "Taysir al-Karim al-Rahman", "d. 1376 AH", "Accessible")
+            ScholarInfo("tabari", "Imam al-Tabari", "Jami' al-Bayan", "d. 310 AH", "Narration and language"),
+            ScholarInfo("qurtubi", "Imam al-Qurtubi", "Al-Jami' li-Ahkam al-Qur'an", "d. 671 AH", "Jurisprudence"),
+            ScholarInfo("saadi", "Abdur Rahman al-Sa'di", "Taysir al-Karim al-Rahman", "d. 1376 AH", "Accessible"),
+            ScholarInfo("maariful_quran", "Mufti Muhammad Shafi", "Ma'ariful Qur'an", "d. 1396 AH", "Fiqh and language")
         )
     }
 
+    /**
+     * Only editions actually present in the upstream verse-indexed corpus are mapped.
+     * Missing language editions deliberately return null; the app must not fabricate a
+     * translation or attribute a generated paraphrase to the mufassir.
+     */
     private fun editionFor(scholarKey: String, language: AppLanguage): Edition? = when (scholarKey) {
         "ibn_kathir" -> when (language) {
-            AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Original Urdu edition indexed from Quran.com; corpus mirror: spa5k/tafsir_api")
-            AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic edition indexed from Quranic Universal Library (Tarteel); corpus mirror: spa5k/tafsir_api")
-            AppLanguage.ENGLISH -> Edition("en-tafisr-ibn-kathir", "English edition indexed from Quranic Universal Library (Tarteel); corpus mirror: spa5k/tafsir_api")
+            AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Urdu Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.ENGLISH -> Edition("en-tafisr-ibn-kathir", "English Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api")
             AppLanguage.HINDI -> null
         }
-        "maududi" -> null // Tafhim-ul-Qur'an is not present in the verified verse-indexed corpus used here.
-        "maariful_quran" -> if (language == AppLanguage.ENGLISH)
-            Edition("en-tafsir-maarif-ul-quran", "Ma'arif-ul-Qur'an, Mufti Muhammad Shafi; edition indexed from Quranic Universal Library (Tarteel)")
+        "tabari" -> if (language == AppLanguage.ARABIC)
+            Edition("ar-tafsir-al-tabari", "Arabic Jami' al-Bayan by Imam al-Tabari; corpus mirror: spa5k/tafsir_api")
         else null
-        "jalalayn" -> when (language) {
-            AppLanguage.ARABIC -> Edition("ar-tafsir-al-jalalayn", "Arabic Tafsir al-Jalalayn edition; corpus mirror: spa5k/tafsir_api")
-            AppLanguage.ENGLISH -> Edition("en-al-jalalayn", "English Tafsir al-Jalalayn edition indexed from altafsir.com; corpus mirror: spa5k/tafsir_api")
-            else -> null
-        }
+        "qurtubi" -> if (language == AppLanguage.ARABIC)
+            Edition("ar-tafseer-al-qurtubi", "Arabic Al-Jami' li-Ahkam al-Qur'an by Imam al-Qurtubi; corpus mirror: spa5k/tafsir_api")
+        else null
         "saadi" -> when (language) {
-            AppLanguage.URDU -> Edition("ur-tafsir-as-saadi-urdu", "Tafsir al-Sa'di Urdu, indexed from Quranic Universal Library (Tarteel)")
-            AppLanguage.ARABIC -> Edition("ar-tafsir-as-saadi", "Tafsir al-Sa'di Arabic, indexed from Quranic Universal Library (Tarteel)")
+            AppLanguage.URDU -> Edition("ur-tafsir-as-saadi-urdu", "Urdu Tafsir al-Sa'di; corpus mirror: spa5k/tafsir_api")
+            AppLanguage.ARABIC -> Edition("ar-tafsir-as-saadi", "Arabic Tafsir al-Sa'di; corpus mirror: spa5k/tafsir_api")
             else -> null
         }
+        "maariful_quran" -> if (language == AppLanguage.ENGLISH)
+            Edition("en-tafsir-maarif-ul-quran", "English Ma'ariful Qur'an by Mufti Muhammad Shafi; corpus mirror: spa5k/tafsir_api")
+        else null
         else -> null
     }
 
