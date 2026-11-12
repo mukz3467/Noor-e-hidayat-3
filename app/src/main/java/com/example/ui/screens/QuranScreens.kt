@@ -367,8 +367,8 @@ fun QuranReaderScreen(
     val tafseerScope = rememberCoroutineScope()
     var isDownloadingAllTafseer by remember { mutableStateOf(false) }
     var offlineTafseerReady by remember { mutableStateOf(false) }
-    var tafseerDownloadCompleted by remember { mutableIntStateOf(0) }
-    var tafseerDownloadTotal by remember { mutableIntStateOf(570) }
+    var tafseerDownloadCompleted by remember { mutableStateOf(0) }
+    var tafseerDownloadTotal by remember { mutableStateOf(570) }
     var tafseerDownloadLabel by remember { mutableStateOf("") }
     var tafseerDownloadError by remember { mutableStateOf("") }
 
@@ -953,7 +953,7 @@ fun QuranReaderScreen(
                                 )
                                 if (isDownloadingAllTafseer) {
                                     LinearProgressIndicator(
-                                        progress = { if (tafseerDownloadTotal > 0) tafseerDownloadCompleted.toFloat() / tafseerDownloadTotal else 0f },
+                                        progress = if (tafseerDownloadTotal > 0) tafseerDownloadCompleted.toFloat() / tafseerDownloadTotal else 0f,
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                     Text(
@@ -979,6 +979,8 @@ fun QuranReaderScreen(
                                             offlineTafseerReady = result.success && QuranTafseerRepository.isAllUrduTafseerDownloaded(context)
                                             if (!result.success) {
                                                 tafseerDownloadError = "ڈاؤن لوڈ مکمل نہیں ہوا: ${result.error ?: "نامعلوم خرابی"} — دوبارہ دبائیں؛ پہلے محفوظ شدہ سورتیں برقرار رہیں گی۔"
+                                            } else if (!result.error.isNullOrBlank()) {
+                                                tafseerDownloadError = result.error
                                             }
                                         }
                                     },
