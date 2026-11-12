@@ -1,6 +1,6 @@
 package com.example.data.notification
 
-import android.app.BroadcastReceiver
+import android.content.BroadcastReceiver
 import android.app.Service
 import android.content.Context
 import android.content.Intent
