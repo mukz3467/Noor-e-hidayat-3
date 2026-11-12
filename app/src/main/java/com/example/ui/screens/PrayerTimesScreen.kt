@@ -938,6 +938,18 @@ fun PrayerTimesScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                if (!PrayerNotificationManager.canUseExactAlarms(context)) {
+                    OutlinedButton(
+                        onClick = { PrayerNotificationManager.requestExactAlarmPermission(context) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Alarm, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Allow precise prayer alarms")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 Button(
                     onClick = {
                         PrayerNotificationManager.sendTestNotification(context, "Asr", schedule.asr)
