@@ -684,7 +684,12 @@ object QuranData {
                         }
                     }
 
-                    if (arAyahs != null && arAyahs.length() > 0) {
+                    if (
+                        arAyahs != null && arAyahs.length() > 0 &&
+                        urAyahs != null && urAyahs.length() == arAyahs.length() &&
+                        enAyahs != null && enAyahs.length() == arAyahs.length() &&
+                        hiAyahs != null && hiAyahs.length() == arAyahs.length()
+                    ) {
                         val resultList = mutableListOf<Ayah>()
                         val total = arAyahs.length()
                         val surahMeta = surahs.firstOrNull { it.number == surahNumber } ?: surahs[0]
@@ -735,12 +740,12 @@ object QuranData {
                                 hiTransName = "मुहम्मद फ़ارूक़ ख़ान",
                                 arTrans = arText,
                                 arTransName = "القرآن الكريم برسم العثماني",
-                                tafseerEn = "Explanation of Verse $ayahNum: Affirmation of Tawheed, divine guidance, and reflection from authentic classical Tafseer sources.",
-                                tafseerEnAuthor = "Tafseer Ibn Kathir",
-                                tafseerUr = "سورۃ ${surahMeta.nameUrdu} کی آیت $ayahNum کی مستند و معتبر تفسیر: آیاتِ الٰہی پر تدبر اور ایمان کی پختگی۔",
-                                tafseerUrAuthor = "تفسیر ابن کثیر (اردو)",
-                                tafseerAr = "التفسير الميسر للآية الكريمة رقم $ayahNum مِن سورة ${surahMeta.nameArabic}.",
-                                tafseerArAuthor = "التفسير الميسر"
+                                tafseerEn = "",
+                                tafseerEnAuthor = "",
+                                tafseerUr = "",
+                                tafseerUrAuthor = "",
+                                tafseerAr = "",
+                                tafseerArAuthor = ""
                             )
                             resultList.add(ayahItem)
                         }
@@ -753,38 +758,9 @@ object QuranData {
             }
         }
 
-        // 2. Predefined fallback if exists
-        val predefined = ayahDatabase[surahNumber]
-        if (!predefined.isNullOrEmpty()) return predefined
-
-        // 3. Fallback to basic authentic verses if assets not ready
-        val surah = surahs.firstOrNull { it.number == surahNumber } ?: surahs[0]
-        val list = mutableListOf<Ayah>()
-        for (i in 1..surah.ayahCount.coerceAtMost(7)) {
-            list.add(
-                createAyah(
-                    surah = surah.number,
-                    ayah = i,
-                    arabic = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
-                    para = surah.startingPara,
-                    enTrans = "Verse $i of Surah ${surah.nameEnglish}",
-                    enTransName = "Saheeh International",
-                    urTrans = "سورۃ ${surah.nameUrdu} کی آیت نمبر $i",
-                    urTransName = "مولانا فتح محمد جالندھری",
-                    hiTrans = "सूरह ${surah.nameHindi} की आयत $i",
-                    hiTransName = "मुहम्मद फ़ारूक़ ख़ान",
-                    arTrans = "سورة ${surah.nameArabic} - الآية $i",
-                    arTransName = "مصحف المدينة النبوية",
-                    tafseerEn = "Tafseer for verse $i of Surah ${surah.nameEnglish}",
-                    tafseerEnAuthor = "Tafseer Ibn Kathir",
-                    tafseerUr = "سورۃ ${surah.nameUrdu} کی آیت $i کی تفسیر",
-                    tafseerUrAuthor = "تفسیر ابن کثیر",
-                    tafseerAr = "تفسير الآية $i",
-                    tafseerArAuthor = "التفسير الميسر"
-                )
-            )
-        }
-        return list
+        // Never substitute invented Arabic or placeholder translations for Quran text.
+        // An empty result tells the UI that the bundled source is unavailable or invalid.
+        return emptyList()
     }
 
     // Overload without context for compatibility
@@ -823,11 +799,8 @@ object QuranData {
                 AyahTranslation("hi_farooq", AppLanguage.HINDI, hiTransName, "हिन्दी अनुवाद संस्करण", hiTrans),
                 AyahTranslation("ar_muyassar", AppLanguage.ARABIC, arTransName, "مجمع الملك فهد لطباعة المصحف الشريف", arTrans)
             ),
-            tafseers = listOf(
-                AyahTafseer("tafseer_en_ibnkathir", AppLanguage.ENGLISH, tafseerEnAuthor, "Tafseer Ibn Kathir (Abridged)", tafseerEn, "Darussalam Publishers"),
-                AyahTafseer("tafseer_ur_maududi", AppLanguage.URDU, tafseerUrAuthor, "مکتبۂ تفاسیر معتبرہ", tafseerUr, "ادارہ معارف اسلامی"),
-                AyahTafseer("tafseer_ar_muyassar", AppLanguage.ARABIC, tafseerArAuthor, "التفسير الميسر", tafseerAr, "مجمع الملك فهد بالمدينة المنورة")
-            )
+            // Do not attach generic/generated commentary under named scholars.
+            tafseers = emptyList()
         )
     }
 }
