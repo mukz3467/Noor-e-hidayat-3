@@ -39,15 +39,15 @@ fun LiveStreamScreen(
     // Official active stream servers for Makkah (Masjid al-Haram) verified on Saudi Quran TV
     // Official active stream servers for Makkah & Madinah (from Harameyn Live Streams endpoint)
     val makkahServers = listOf(
-        StreamServer("eC4LfEVxvKg", "Primary (Official Saudi Quran TV HD 24/7)"),
-        StreamServer("vdvjUpl03q0", "Server 2 (Makkah Live HD | الحرم المكي مباشر)"),
-        StreamServer("Qvcimc6QQY8", "Server 3 (Makkah Tawaf & Tilawat)")
+        StreamServer("eC4LfEVxvKg", "Saudi Quran TV (Official Makkah broadcast)"),
+        StreamServer("vdvjUpl03q0", "Alternative Makkah stream"),
+        StreamServer("Qvcimc6QQY8", "Alternative Makkah stream 2")
     )
 
     val madinahServers = listOf(
-        StreamServer("si0jNUvk8Vk", "Primary (Official Sunnah TV 24/7 | قناة السنة النبوية)"),
-        StreamServer("Rs7St51oDDc", "Server 2 (Madinah Live HD | المسجد النبوي الشريف)"),
-        StreamServer("BtMUUgApnPs", "Server 3 (Madinah Live 24/7 | Green Dome & Courtyard)")
+        StreamServer("Rs7St51oDDc", "Saudi Sunnah TV (Official Madinah broadcast)"),
+        StreamServer("9A1S0xAPVIs", "Alternative Madinah stream"),
+        StreamServer("BtMUUgApnPs", "Alternative Madinah stream 2")
     )
 
     val currentServers = if (selectedChannel == 0) makkahServers else madinahServers
