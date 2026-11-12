@@ -37,6 +37,7 @@ import com.example.data.location.AppLocationManager
 import com.example.data.model.AppLanguage
 import com.example.data.model.PrayerSchedule
 import com.example.data.notification.PrayerNotificationManager
+import com.example.data.notification.PrayerAlarmEntry
 import com.example.data.repository.IslamicCalendarRepository
 import com.example.data.repository.PrayerCalculator
 import com.example.data.repository.QuranAudioManager
@@ -45,6 +46,8 @@ import com.example.ui.components.NoorTopBar
 import kotlinx.coroutines.delay
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
+import java.text.SimpleDateFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,6 +149,53 @@ fun PrayerTimesScreen(
             cityName = "${userLocation.cityName}, ${userLocation.countryName}",
             timeZoneId = userLocation.timeZoneId
         )
+    }
+
+    // Schedule the next 14 days of prayer alarms. Settings/location changes replace old alarms.
+    LaunchedEffect(userLocation, selectedMethod, asrJuristic, adjustments, notifSettings) {
+        PrayerNotificationManager.init(context)
+        val zone = TimeZone.getTimeZone(userLocation.timeZoneId)
+        val parser = SimpleDateFormat("hh:mm a", Locale.US).apply { timeZone = zone }
+        val entries = mutableListOf<PrayerAlarmEntry>()
+        val today = Calendar.getInstance(zone)
+        for (offset in 0..13) {
+            val day = (today.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, offset)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val daily = PrayerCalculator.calculatePrayerTimes(
+                latitude = userLocation.latitude,
+                longitude = userLocation.longitude,
+                calendar = day,
+                method = selectedMethod,
+                asrJuristic = asrJuristic,
+                adjustments = adjustments,
+                cityName = "${userLocation.cityName}, ${userLocation.countryName}",
+                timeZoneId = userLocation.timeZoneId
+            )
+            val dateKey = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = zone }.format(day.time)
+            listOf(
+                "fajr" to daily.fajr,
+                "dhuhr" to daily.dhuhr,
+                "asr" to daily.asr,
+                "maghrib" to daily.maghrib,
+                "isha" to daily.isha
+            ).forEach { (key, timeText) ->
+                try {
+                    val parsed = parser.parse(timeText) ?: return@forEach
+                    val timeOnly = Calendar.getInstance(zone).apply { time = parsed }
+                    val alarmTime = (day.clone() as Calendar).apply {
+                        set(Calendar.HOUR_OF_DAY, timeOnly.get(Calendar.HOUR_OF_DAY))
+                        set(Calendar.MINUTE, timeOnly.get(Calendar.MINUTE))
+                    }
+                    entries.add(PrayerAlarmEntry("${dateKey}_${key}", key, alarmTime.timeInMillis))
+                } catch (_: Exception) { }
+            }
+        }
+        PrayerNotificationManager.scheduleAlarms(context, entries)
     }
 
     // Live Next Prayer & Countdown
