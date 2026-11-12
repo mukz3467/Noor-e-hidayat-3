@@ -380,13 +380,18 @@ object AppLocationManager {
             }
         } catch (_: Exception) {}
 
-        // Match closest preset city if name is unknown
-        if (cityName == "Detected Location") {
-            val closest = findClosestPreset(lat, lon)
-            if (closest != null) {
-                cityName = closest.nameEn
-                countryName = closest.country
+        // Use a known city timezone only when the GPS fix is reasonably close to that preset.
+        // Otherwise retain the device timezone rather than guessing a timezone from country alone.
+        val closest = findClosestPreset(lat, lon)
+        if (closest != null) {
+            val distance = FloatArray(1)
+            Location.distanceBetween(lat, lon, closest.latitude, closest.longitude, distance)
+            if (distance[0] <= 100_000f) {
                 tzId = closest.timeZoneId
+                if (cityName == "Detected Location") {
+                    cityName = closest.nameEn
+                    countryName = closest.country
+                }
             }
         }
 
