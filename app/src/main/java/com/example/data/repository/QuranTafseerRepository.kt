@@ -1,5 +1,7 @@
 package com.example.data.repository
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.text.Html
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.nl.translate.TranslateLanguage
@@ -46,6 +48,69 @@ object QuranTafseerRepository {
         .build()
 
     private val cache = ConcurrentHashMap<String, ScholarTafseer>()
+    @Volatile private var offlinePrefs: SharedPreferences? = null
+
+    /** Initialize persistent storage once from the application context. */
+    fun init(context: Context) {
+        if (offlinePrefs == null) {
+            synchronized(this) {
+                if (offlinePrefs == null) {
+                    offlinePrefs = context.applicationContext.getSharedPreferences(
+                        "quran_tafseer_offline_v1",
+                        Context.MODE_PRIVATE
+                    )
+                }
+            }
+        }
+    }
+
+    private fun offlineKey(cacheKey: String): String =
+        "tafseer_" + cacheKey.replace("/", "_").replace("-", "_")
+
+    private fun readOffline(cacheKey: String): ScholarTafseer? {
+        val raw = offlinePrefs?.getString(offlineKey(cacheKey), null) ?: return null
+        return try {
+            val json = JSONObject(raw)
+            val pointsJson = json.optJSONArray("keyPoints")
+            val points = buildList {
+                if (pointsJson != null) {
+                    for (i in 0 until pointsJson.length()) add(pointsJson.optString(i))
+                }
+            }
+            ScholarTafseer(
+                scholarKey = json.getString("scholarKey"),
+                authorName = json.getString("authorName"),
+                bookTitle = json.getString("bookTitle"),
+                eraAndCredentials = json.getString("eraAndCredentials"),
+                tafseerText = json.getString("tafseerText"),
+                keyPoints = points,
+                sourceAttribution = json.optString("sourceAttribution"),
+                isMachineTranslated = json.optBoolean("isMachineTranslated"),
+                translationNotice = json.optString("translationNotice")
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun writeOffline(cacheKey: String, tafseer: ScholarTafseer) {
+        val prefs = offlinePrefs ?: return
+        val points = org.json.JSONArray().apply {
+            tafseer.keyPoints.forEach { put(it) }
+        }
+        val json = JSONObject().apply {
+            put("scholarKey", tafseer.scholarKey)
+            put("authorName", tafseer.authorName)
+            put("bookTitle", tafseer.bookTitle)
+            put("eraAndCredentials", tafseer.eraAndCredentials)
+            put("tafseerText", tafseer.tafseerText)
+            put("keyPoints", points)
+            put("sourceAttribution", tafseer.sourceAttribution)
+            put("isMachineTranslated", tafseer.isMachineTranslated)
+            put("translationNotice", tafseer.translationNotice)
+        }
+        prefs.edit().putString(offlineKey(cacheKey), json.toString()).apply()
+    }
 
     fun getTop5Scholars(language: AppLanguage): List<ScholarInfo> = when (language) {
         AppLanguage.URDU -> listOf(
@@ -233,6 +298,15 @@ object QuranTafseerRepository {
         val cacheKey = "${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}/${language.code}"
         cache[cacheKey]?.let { return@withContext it }
 
+        // Urdu and English are persisted for offline reading after the first successful fetch.
+        // Arabic and Hindi continue to use the online source.
+        if (language == AppLanguage.URDU || language == AppLanguage.ENGLISH) {
+            readOffline(cacheKey)?.let {
+                cache[cacheKey] = it
+                return@withContext it
+            }
+        }
+
         try {
             val url = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}.json"
             val request = Request.Builder()
@@ -271,6 +345,9 @@ object QuranTafseerRepository {
                     translationNotice = if (needsMachineTranslation) machineTranslationNotice(language, edition.language) else ""
                 )
                 cache[cacheKey] = result
+                if (language == AppLanguage.URDU || language == AppLanguage.ENGLISH) {
+                    writeOffline(cacheKey, result)
+                }
                 result
             }
         } catch (error: Exception) {
