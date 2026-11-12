@@ -102,6 +102,39 @@ object QuranTafseerRepository {
         else -> null
     }
 
+    /**
+     * The al-Sa'di corpus mirror stores the complete surah commentary in every
+     * ayah JSON file. Extract the explicitly numbered paragraph so the reader
+     * never displays the whole surah as if it were one ayah's tafseer.
+     *
+     * The Urdu edition uses [1], [2]... markers; the Arabic edition uses {1}, {2}...
+     */
+    private fun extractSaadiAyahSection(
+        rawText: String,
+        editionSlug: String,
+        ayahNumber: Int
+    ): String {
+        val markerPattern = if (editionSlug.startsWith("ur-")) {
+            Regex("(?m)^[\\t ]*\\[$ayahNumber\\][\\t ]*")
+        } else {
+            Regex("(?m)^[\\t ]*\\{$ayahNumber\\}[\\t ]*")
+        }
+        val marker = markerPattern.find(rawText)
+            ?: throw IllegalStateException("The al-Sa'di source has no explicit marker for ayah $ayahNumber")
+        val nextMarkerPattern = if (editionSlug.startsWith("ur-")) {
+            Regex("(?m)^[\\t ]*\\[\\d+\\][\\t ]*")
+        } else {
+            Regex("(?m)^[\\t ]*\\{\\d+\\}[\\t ]*")
+        }
+        val nextMarker = nextMarkerPattern.find(rawText, marker.range.last + 1)
+        val sectionEnd = nextMarker?.range?.first ?: rawText.length
+        val section = rawText.substring(marker.range.last + 1, sectionEnd).trim()
+        if (section.isBlank()) {
+            throw IllegalStateException("The al-Sa'di source section for ayah $ayahNumber is empty")
+        }
+        return section
+    }
+
     private fun unavailable(language: AppLanguage, scholarKey: String): String {
         val message = when (language) {
             AppLanguage.URDU -> "اس عالم کی اس زبان میں آیت وار مستند تفسیر کا تصدیق شدہ متن دستیاب نہیں۔ اس لیے کوئی وضاحتی متن ان کے نام سے منسوب نہیں کیا گیا۔"
@@ -149,7 +182,14 @@ object QuranTafseerRepository {
                 if (rawText.isBlank() || rawText == "null") {
                     throw IllegalStateException("No source text exists for this ayah in this edition")
                 }
-                val plainText = Html.fromHtml(rawText, Html.FROM_HTML_MODE_LEGACY).toString().trim()
+                // al-Sa'di is stored as surah-wide text repeated in each ayah file.
+                // Slice its explicit verse marker before displaying it as ayah-specific.
+                val ayahScopedText = if (scholar.key == "saadi") {
+                    extractSaadiAyahSection(rawText, edition.slug, ayah.ayahNumber)
+                } else {
+                    rawText
+                }
+                val plainText = Html.fromHtml(ayahScopedText, Html.FROM_HTML_MODE_LEGACY).toString().trim()
                 if (plainText.isBlank()) throw IllegalStateException("Source text is empty after decoding")
                 val result = ScholarTafseer(
                     scholarKey = scholar.key,
