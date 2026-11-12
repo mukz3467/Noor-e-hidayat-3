@@ -687,68 +687,24 @@ fun QuranReaderScreen(
                         }
                     }
 
-                    // Urdu is the fixed source language; the next row changes only the display translation.
+                    // 4 Language Selector Chips
                     item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(9.dp),
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = "اصل تفسیر کی زبان",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.primary
+                            val languages = listOf(
+                                AppLanguage.URDU to "اردو",
+                                AppLanguage.ENGLISH to "English",
+                                AppLanguage.HINDI to "हिन्दी",
+                                AppLanguage.ARABIC to "العربية"
                             )
-                            FilterChip(
-                                selected = true,
-                                onClick = { tafseerSheetLanguage = AppLanguage.URDU },
-                                label = { Text("اردو — اصل مستند تفسیر", fontWeight = FontWeight.Bold) },
-                                modifier = Modifier.testTag("tafseer_source_ur")
-                            )
-                            Text(
-                                text = when (tafseerSheetLanguage) {
-                                    AppLanguage.URDU -> "اصل اردو متن دکھایا جا رہا ہے۔"
-                                    AppLanguage.ENGLISH -> "The original Urdu commentary is translated into English on this device."
-                                    AppLanguage.HINDI -> "मूल उर्दू तफ़सीर का हिंदी में मशीन अनुवाद इस डिवाइस पर किया जाएगा।"
-                                    AppLanguage.ARABIC -> "تُترجم التفسيرات الأردية الأصلية إلى العربية على هذا الجهاز."
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = "ترجمہ کریں:",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                val outputLanguages = listOf(
-                                    AppLanguage.URDU to "اردو",
-                                    AppLanguage.ENGLISH to "English",
-                                    AppLanguage.HINDI to "हिन्दी",
-                                    AppLanguage.ARABIC to "العربية"
-                                )
-                                outputLanguages.forEach { (lang, label) ->
-                                    FilterChip(
-                                        selected = tafseerSheetLanguage == lang,
-                                        onClick = { tafseerSheetLanguage = lang },
-                                        label = { Text(label, fontWeight = FontWeight.Bold) },
-                                        modifier = Modifier.testTag("tafseer_lang_${lang.code}")
-                                    )
-                                }
-                            }
-                            if (tafseerSheetLanguage != AppLanguage.URDU) {
-                                Text(
-                                    text = when (tafseerSheetLanguage) {
-                                        AppLanguage.ENGLISH -> "This is an on-device machine translation, not a published English edition or scholar-approved translation. The first use may need internet to download Google's language model."
-                                        AppLanguage.HINDI -> "यह डिवाइस पर किया गया मशीन अनुवाद है, प्रकाशित हिंदी संस्करण नहीं। पहली बार भाषा मॉडल डाउनलोड करने के लिए इंटरनेट की आवश्यकता हो सकती है।"
-                                        AppLanguage.ARABIC -> "هذه ترجمة آلية على الجهاز وليست طبعة عربية منشورة أو ترجمة معتمدة من العالم. قد يلزم الإنترنت أول مرة لتنزيل نموذج اللغة."
-                                        AppLanguage.URDU -> ""
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                            languages.forEach { (lang, label) ->
+                                FilterChip(
+                                    selected = translationSheetLanguage == lang,
+                                    onClick = { translationSheetLanguage = lang },
+                                    label = { Text(label, fontWeight = FontWeight.Bold) },
+                                    modifier = Modifier.testTag("trans_lang_${lang.code}")
                                 )
                             }
                         }
@@ -962,68 +918,61 @@ fun QuranReaderScreen(
                         )
                     }
 
-                    // 4 Language Selector Chips
+                    // Urdu source selector and separate target-language translation controls.
                     item {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(9.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            val languages = listOf(
-                                AppLanguage.URDU to "اردو",
-                                AppLanguage.ENGLISH to "English",
-                                AppLanguage.HINDI to "हिन्दी",
-                                AppLanguage.ARABIC to "العربية"
+                            Text(
+                                text = "اصل تفسیر کی زبان",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            languages.forEach { (lang, label) ->
-                                FilterChip(
-                                    selected = tafseerSheetLanguage == lang,
-                                    onClick = { tafseerSheetLanguage = lang },
-                                    label = { Text(label, fontWeight = FontWeight.Bold) },
-                                    modifier = Modifier.testTag("tafseer_lang_${lang.code}")
-                                )
-                            }
-                        }
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer
+                            FilterChip(
+                                selected = true,
+                                onClick = { tafseerSheetLanguage = AppLanguage.URDU },
+                                label = { Text("اردو — اصل مستند تفسیر", fontWeight = FontWeight.Bold) },
+                                modifier = Modifier.testTag("tafseer_source_ur")
+                            )
+                            Text(
+                                text = "ترجمہ کریں:",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = if (tafseerSheetLanguage == AppLanguage.URDU) "آف لائن" else if (tafseerSheetLanguage == AppLanguage.ENGLISH) "OFFLINE" else "",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                val outputLanguages = listOf(
+                                    AppLanguage.URDU to "اردو",
+                                    AppLanguage.ENGLISH to "English",
+                                    AppLanguage.HINDI to "हिन्दी",
+                                    AppLanguage.ARABIC to "العربية"
                                 )
-                            }
-                            if (tafseerSheetLanguage == AppLanguage.ARABIC || tafseerSheetLanguage == AppLanguage.HINDI) {
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = MaterialTheme.colorScheme.tertiaryContainer
-                                ) {
-                                    Text(
-                                        text = if (tafseerSheetLanguage == AppLanguage.ARABIC) "عبر الإنترنت" else "ऑनलाइन",
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                outputLanguages.forEach { (lang, label) ->
+                                    FilterChip(
+                                        selected = tafseerSheetLanguage == lang,
+                                        onClick = { tafseerSheetLanguage = lang },
+                                        label = { Text(label, fontWeight = FontWeight.Bold) },
+                                        modifier = Modifier.testTag("tafseer_lang_${lang.code}")
                                     )
                                 }
                             }
+                            if (tafseerSheetLanguage != AppLanguage.URDU) {
+                                Text(
+                                    text = when (tafseerSheetLanguage) {
+                                        AppLanguage.ENGLISH -> "Machine translation from the original Urdu tafseer. This is not a published English edition or scholar-approved translation. The first use may need internet to download Google's language model."
+                                        AppLanguage.HINDI -> "मूल उर्दू तफ़सीर का मशीन अनुवाद। यह प्रकाशित हिंदी संस्करण या विद्वान द्वारा अनुमोदित अनुवाद नहीं है। पहली बार भाषा मॉडल डाउनलोड करने के लिए इंटरनेट की आवश्यकता हो सकती है।"
+                                        AppLanguage.ARABIC -> "ترجمة آلية من التفسير الأردي الأصلي، وليست طبعة منشورة أو ترجمة معتمدة من العالم. قد يلزم الإنترنت أول مرة لتنزيل نموذج اللغة."
+                                        AppLanguage.URDU -> ""
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        Text(
-                            text = when (tafseerSheetLanguage) {
-                                AppLanguage.URDU -> "اردو تفسیر پہلی بار انٹرنیٹ سے لوڈ ہونے کے بعد محفوظ ہو جائے گی اور پھر آف لائن دستیاب ہوگی۔"
-                                AppLanguage.ENGLISH -> "English tafseer is saved after its first online load and is then available offline."
-                                AppLanguage.ARABIC -> "تحتاج التفسيرات العربية إلى اتصال بالإنترنت عند عرضها."
-                                AppLanguage.HINDI -> "हिंदी तफ़सीर देखने के लिए इंटरनेट कनेक्शन आवश्यक है।"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(top = 3.dp)
-                        )
                     }
 
                     // Arabic Verse in Naskh Script
