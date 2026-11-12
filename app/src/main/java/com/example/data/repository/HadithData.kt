@@ -1,0 +1,137 @@
+package com.example.data.repository
+
+import com.example.data.model.Hadith
+
+object HadithData {
+
+    val collections = listOf("Sahih al-Bukhari", "Sahih Muslim")
+
+    val hadiths: List<Hadith> = listOf(
+        Hadith(
+            id = "bukhari_1",
+            collection = "Sahih al-Bukhari",
+            bookNumber = 1,
+            bookName = "Book of Revelation (بدء الوحي)",
+            hadithNumber = 1,
+            chapterArabic = "باب كَيْفَ كَانَ بَدْءُ الْوَحْيِ إِلَى رَسُولِ اللَّهِ صلى الله عليه وسلم",
+            chapterEnglish = "How divine revelation began to the Messenger of Allah ﷺ",
+            chapterUrdu = "باب: رسول اللہ ﷺ پر وحی کی ابتدا کیسے ہوئی",
+            chapterHindi = "अध्याय: अल्लाह के रसूल ﷺ पर वह्य की शुरुआत कैसे हुई",
+            textArabic = "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى، فَمَنْ كَانَتْ هِجْرَتُهُ إِلَى دُنْيَا يُصِيبُهَا أَوْ إِلَى امْرَأَةٍ يَنْكِحُهَا فَهِجْرَتُهُ إِلَى مَا هَاجَرَ إِلَيْهِ.",
+            textEnglish = "Narrated 'Umar bin Al-Khattab (may Allah be pleased with him): I heard Allah's Messenger (ﷺ) saying, 'The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended. So whoever emigrated for worldly benefits or for a woman to marry, his emigration was for what he emigrated for.'",
+            textUrdu = "حضرت عمر بن خطاب رضی اللہ عنہ سے روایت ہے کہ میں نے رسول اللہ ﷺ کو فرماتے ہوئے سنا: 'اعمال کا دارومدار نیتوں پر ہے اور ہر انسان کے لیے وہی ہے جس کی اس نے نیت کی۔ پس جس کی ہجرت دنیا حاصل کرنے کے لیے ہو یا کسی عورت سے نکاح کی غرض سے ہو، تو اس کی ہجرت اسی کے لیے ہے جس کی طرف اس نے ہجرت کی۔'",
+            textHindi = "हज़रत उमर बिन खत्ताब (रज़ि.) से रिवायत है कि रसूलुल्लाह (ﷺ) ने फ़रमाया: 'कर्मों का दारोमदार नीयतों पर है और हर इंसान के लिए वही है जिसकी उसने नीयत की। अतः जिसकी हिजरत दुनिया कमाने या किसी महिला से विवाह के लिए हो, तो उसकी हिजरत उसी के लिए गिनी जाएगी जिसके लिए उसने हिजरत की।'",
+            narrator = "Umar bin Al-Khattab (رضي الله عنه)",
+            grade = "Sahih (صحيح متفق عليه)",
+            sourceAttribution = "Sahih al-Bukhari, Hadith 1; Sahih Muslim, Hadith 1907"
+        ),
+        Hadith(
+            id = "bukhari_2",
+            collection = "Sahih al-Bukhari",
+            bookNumber = 2,
+            bookName = "Book of Belief (الإيمان)",
+            hadithNumber = 8,
+            chapterArabic = "باب بُنِيَ الإِسْلاَمُ عَلَى خَمْسٍ",
+            chapterEnglish = "Islam is built on five pillars",
+            chapterUrdu = "باب: اسلام کی بنیاد پانچ ستونوں پر ہے",
+            chapterHindi = "अध्याय: इस्लाम की बुनियाद पाँच स्तम्भों पर है",
+            textArabic = "بُنِيَ الإِسْلاَمُ عَلَى خَمْسٍ شَهَادَةِ أَنْ لاَ إِلَهَ إِلاَّ اللَّهُ وَأَنَّ مُحَمَّدًا رَسُولُ اللَّهِ، وَإِقَامِ الصَّلاَةِ، وَإِيتَاءِ الزَّكَاةِ، وَالْحَجِّ، وَصَوْمِ رَمَضَانَ.",
+            textEnglish = "Narrated Ibn 'Umar: Allah's Messenger (ﷺ) said: 'Islam is based on (the following) five (principles): 1. To testify that none has the right to be worshipped but Allah and Muhammad is Allah's Messenger. 2. To offer the (compulsory congregational) prayers dutifully and perfectly. 3. To pay Zakat. 4. To perform Hajj. 5. To observe fast during the month of Ramadan.'",
+            textUrdu = "حضرت عبداللہ بن عمر رضی اللہ عنہما سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: 'اسلام کی بنیاد پانچ ستونوں پر رکھی گئی ہے: اس بات کی گواہی دینا کہ اللہ کے سوا کوئی معبود نہیں اور محمد ﷺ اللہ کے رسول ہیں، نماز قائم کرنا، زکوٰۃ ادا کرنا، حج کرنا اور رمضان کے روزے رکھنا۔'",
+            textHindi = "हज़रत इब्ने उमर (रज़ि.) से रिवायत है कि रसूलुल्लाह (ﷺ) ने फ़रमाया: 'इस्लाम की बुनियाद पाँच बातों पर रखी गई है: इस बात की गवाही देना कि अल्लाह के सिवा कोई पूज्य नहीं और मुहम्मद ﷺ अल्लाह के रसूल हैं, नमाज़ क़ायम करना, ज़कात देना, हज करना और रमज़ान के रोज़े रखना।'",
+            narrator = "Abdullah bin Umar (رضي الله عنهما)",
+            grade = "Sahih (صحيح)",
+            sourceAttribution = "Sahih al-Bukhari, Hadith 8"
+        ),
+        Hadith(
+            id = "bukhari_3",
+            collection = "Sahih al-Bukhari",
+            bookNumber = 3,
+            bookName = "Book of Knowledge (العلم)",
+            hadithNumber = 67,
+            chapterArabic = "باب مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ",
+            chapterEnglish = "Whomever Allah desires good for, He gives him understanding of the religion",
+            chapterUrdu = "باب: اللہ جس کے ساتھ بھلائی چاہتا ہے اسے دین کی گہری سمجھ عطا کرتا ہے",
+            chapterHindi = "अध्याय: अल्लाह जिसके साथ भलाई चाहता है उसे दीन की समझ देता है",
+            textArabic = "مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ، وَإِنَّمَا أَنَا قَاسِمٌ وَاللَّهُ يُعْطِي.",
+            textEnglish = "Narrated Mu'awiya: I heard the Prophet (ﷺ) saying, 'If Allah wants to do good to a person, He makes him comprehend the religion (the understanding of Quran and Sunnah). And Allah is the Giver and I am the distributor.'",
+            textUrdu = "حضرت معاویہ رضی اللہ عنہ سے روایت ہے کہ میں نے نبی کریم ﷺ کو فرماتے سنا: 'اللہ جس کے ساتھ خیر اور بھلائی کا ارادہ فرماتا ہے، اسے دین کی فہم و سمجھ عطا فرما دیتا ہے، اور دینے والا اللہ ہے اور میں تقسیم کرنے والا ہوں۔'",
+            textHindi = "हज़रत मुआविया (रज़ि.) से रिवायत है कि रसूलुल्लाह (ﷺ) ने फ़रमाया: 'अल्लाह जिसके साथ भलाई का इरादा करता है, उसे दीन की समझ प्रदान करता है। देने वाला अल्लाह है और मैं केवल बांटने वाला हूँ।'",
+            narrator = "Muawiyah bin Abi Sufyan (رضي الله عنه)",
+            grade = "Sahih (صحيح)",
+            sourceAttribution = "Sahih al-Bukhari, Hadith 71"
+        ),
+        Hadith(
+            id = "bukhari_4",
+            collection = "Sahih al-Bukhari",
+            bookNumber = 61,
+            bookName = "Virtues of the Quran (فضائل القرآن)",
+            hadithNumber = 5027,
+            chapterArabic = "باب خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+            chapterEnglish = "The best among you are those who learn the Quran and teach it",
+            chapterUrdu = "باب: تم میں سے بہترین وہ ہے جو قرآن سیکھے اور سکھائے",
+            chapterHindi = "अध्याय: तुम में सबसे बेहतर वह है जो क़ुरआन सीखे और सिखाए",
+            textArabic = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ.",
+            textEnglish = "Narrated 'Uthman bin 'Affan (may Allah be pleased with him): The Prophet (ﷺ) said: 'The best among you (Muslims) are those who learn the Qur'an and teach it.'",
+            textUrdu = "حضرت عثمان غنی رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: 'تم میں سے سب سے بہتر وہ شخص ہے جو قرآن سیکھے اور اسے دوسروں کو سکھائے۔'",
+            textHindi = "हज़रत उसमान (रज़ि.) से रिवायत है कि नबी करीम (ﷺ) ने फ़रमाया: 'तुम में सबसे उत्तम वह है जो क़ुरआन सीखे और दूसरों को सिखाए।'",
+            narrator = "Uthman bin Affan (رضي الله عنه)",
+            grade = "Sahih (صحيح)",
+            sourceAttribution = "Sahih al-Bukhari, Hadith 5027"
+        ),
+        Hadith(
+            id = "muslim_1",
+            collection = "Sahih Muslim",
+            bookNumber = 1,
+            bookName = "Book of Faith (الإيمان)",
+            hadithNumber = 1,
+            chapterArabic = "باب بَيَانِ الإِيمَانِ وَالإِسْلاَمِ وَالإِحْسَانِ (حديث جبريل)",
+            chapterEnglish = "Clarification of Faith, Islam, and Ihsan (Hadith Jibril)",
+            chapterUrdu = "باب: ایمان، اسلام اور احسان کا بیان (حدیثِ جبریلؑ)",
+            chapterHindi = "अध्याय: ईमान, इस्लाम और एहसान का बयान (हदीस-ए-जिब्रील)",
+            textArabic = "الإِحْسَانُ أَنْ تَعْبُدَ اللَّهَ كَأَنَّكَ تَرَاهُ، فَإِنْ لَمْ تَكُنْ تَرَاهُ فَإِنَّهُ يَرَاكَ.",
+            textEnglish = "From the famous Hadith of Jibril (Gabriel): 'What is Ihsan (spiritual excellence)?' The Prophet (ﷺ) replied: 'It is to worship Allah as though you see Him, and while you see Him not, truly He sees you.'",
+            textUrdu = "حدیثِ جبریل علیہ السلام میں ہے کہ جبریلؑ نے پوچھا: احسان کیا ہے؟ آپ ﷺ نے فرمایا: 'احسان یہ ہے کہ تم اللہ کی عبادت اس طرح کرو گویا تم اسے دیکھ رہے ہو، اور اگر تم اسے نہ دیکھ سکو تو یہ یقین رکھو کہ وہ تمہیں دیکھ رہا ہے۔'",
+            textHindi = "हदीस-ए-जिब्रील में है कि पूछा गया एहसान क्या है? नबी ﷺ ने फ़रमाया: 'एहसान यह है कि तुम अल्लाह की इबादत ऐसे करो जैसे उसे देख रहे हो, और यदि तुम उसे नहीं देख पाते तो यह यकीन रखो कि वह तुम्हें देख रहा है।'",
+            narrator = "Umar bin Al-Khattab (رضي الله عنه)",
+            grade = "Sahih (صحيح)",
+            sourceAttribution = "Sahih Muslim, Hadith 8"
+        ),
+        Hadith(
+            id = "muslim_2",
+            collection = "Sahih Muslim",
+            bookNumber = 48,
+            bookName = "Book of Remembrance and Dua (الذكر والدعاء)",
+            hadithNumber = 2699,
+            chapterArabic = "باب فَضْلِ الاجْتِمَاعِ عَلَى تِلاَوَةِ الْقُرْآنِ وَعَلَى الذِّكْرِ",
+            chapterEnglish = "The virtue of gathering to recite the Quran and remember Allah",
+            chapterUrdu = "باب: تلاوتِ قرآن اور ذکر الٰہی کے لیے جمع ہونے کی فضیلت",
+            chapterHindi = "अध्याय: क़ुरआन की तिलावत और ज़िक्र के लिए जमा होने की फ़ज़ीलत",
+            textArabic = "مَا اجْتَمَعَ قَوْمٌ فِي بَيْتٍ مِنْ بُيُوتِ اللَّهِ يَتْلُونَ كِتَابَ اللَّهِ وَيَتَدَارَسُونَهُ بَيْنَهُمْ، إِلاَّ نَزَلَتْ عَلَيْهِمُ السَّكِينَةُ، وَغَشِيَتْهُمُ الرَّحْمَةُ، وَحَفَّتْهُمُ الْمَلاَئِكَةُ، وَذَكَرَهُمُ اللَّهُ فِيمَنْ عِنْدَهُ.",
+            textEnglish = "Abu Hurairah reported Allah's Messenger (ﷺ) as saying: 'Never do people gather in one of the houses of Allah (mosques), reciting the Book of Allah and studying it together, but tranquility descends upon them, mercy envelops them, the angels surround them, and Allah mentions them to those with Him.'",
+            textUrdu = "حضرت ابوہریرہ رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: 'جب بھی کوئی قوم اللہ کے گھروں میں سے کسی گھر میں جمع ہو کر اللہ کی کتاب کی تلاوت کرتی ہے اور آپس میں اسے سمجھتی اور سکھاتی ہے، تو ان پر سکینت نازل ہوتی ہے، رحمت انہیں ڈھانپ لیتی ہے، فرشتے ان کے گرد گھیرا ڈال لیتے ہیں، اور اللہ ان کا تذکرہ اپنے مقرب فرشتوں کی محفل میں فرماتا ہے۔'",
+            textHindi = "हज़रत अबू हुरैरा (रज़ि.) से रिवायत है कि रसूलुल्लाह (ﷺ) ने फ़रमाया: 'जब भी लोग अल्लाह के किसी घर (मस्जिद) में इकट्ठा होकर अल्लाह की किताब पढ़ते और आपस में सीखते-सिखाते हैं, तो उन पर सुकून नाज़िल होता है, रहमत उन्हें ढांप लेती है, फ़रिश्ते उन्हें घेर लेते हैं और अल्लाह अपने पास रहने वालों में उनका ज़िक्र करता है।'",
+            narrator = "Abu Hurairah (رضي الله عنه)",
+            grade = "Sahih (صحيح)",
+            sourceAttribution = "Sahih Muslim, Hadith 2699"
+        ),
+        Hadith(
+            id = "bukhari_5",
+            collection = "Sahih al-Bukhari",
+            bookNumber = 78,
+            bookName = "Book of Good Manners (الأدب)",
+            hadithNumber = 6011,
+            chapterArabic = "باب رَحْمَةِ النَّاسِ وَالْبَهَائِمِ",
+            chapterEnglish = "Mercy towards people and animals",
+            chapterUrdu = "باب: لوگوں اور تمام جانداروں پر شفقت و رحم",
+            chapterHindi = "अध्याय: लोगों और जानवरों पर रहम करना",
+            textArabic = "مَنْ لاَ يَرْحَمُ لاَ يُرْحَمُ.",
+            textEnglish = "Narrated Abu Huraira: Allah's Messenger (ﷺ) kissed Al-Hasan bin 'Ali while Al-Aqra' bin Habis was sitting with him. Al-Aqra' said, 'I have ten children and have never kissed any of them.' Allah's Messenger (ﷺ) cast a look at him and said, 'Whoever is not merciful to others will not be treated with mercy.'",
+            textUrdu = "حضرت ابوہریرہ رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے حضرت حسن بن علی رضی اللہ عنہما کو چوما۔ اقرع بن حابس رضی اللہ عنہ نے کہا: میرے دس بچے ہیں میں نے ان میں سے کسی کو نہیں چوما۔ آپ ﷺ نے ان کی طرف دیکھا اور فرمایا: 'جو دوسروں پر رحم نہیں کرتا اس پر رحم نہیں کیا جاتا۔'",
+            textHindi = "हज़रत अबू हुरैरा (रज़ि.) से रिवायत है कि रसूलुल्लाह (ﷺ) ने फ़रमाया: 'जो दूसरों पर रहम नहीं करता, उस पर रहम नहीं किया जाएगा।'",
+            narrator = "Abu Hurairah (رضي الله عنه)",
+            grade = "Sahih (صحيح)",
+            sourceAttribution = "Sahih al-Bukhari, Hadith 5997"
+        )
+    )
+}

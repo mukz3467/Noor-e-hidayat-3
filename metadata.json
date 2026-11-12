@@ -1,0 +1,6 @@
+{
+  "name": "Noor-e-Hidayat",
+  "description": "Complete Islamic application featuring verified Quran (all 114 Surahs and 30 Paras) with ayah-wise translation and Tafseer, Sahih Hadith library, live Makkah and Madinah, prayer times with Azan alerts, Qibla compass, Zakat calculator, Tasbeeh counter, Duas, and four languages (English, Urdu, Arabic, Hindi).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

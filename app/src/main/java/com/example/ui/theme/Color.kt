@@ -1,0 +1,43 @@
+package com.example.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Theme 1: Emerald & Gold (زمردی و سنہری)
+val EmeraldPrimary = Color(0xFF0F5132)
+val EmeraldOnPrimary = Color(0xFFFFFFFF)
+val EmeraldPrimaryContainer = Color(0xFFD1E7DD)
+val EmeraldOnPrimaryContainer = Color(0xFF0A3622)
+val GoldAccent = Color(0xFFD4AF37)
+val GoldAccentDark = Color(0xFFB8860B)
+val EmeraldSurface = Color(0xFFF8FAF8)
+val EmeraldBackground = Color(0xFFF3F6F4)
+val EmeraldOnSurface = Color(0xFF1E2922)
+
+// Theme 2: Soft Light (نورانی روشنی)
+val SoftLightPrimary = Color(0xFF0D9488)
+val SoftLightOnPrimary = Color(0xFFFFFFFF)
+val SoftLightPrimaryContainer = Color(0xFFCCFBF1)
+val SoftLightOnPrimaryContainer = Color(0xFF115E59)
+val SoftLightSurface = Color(0xFFFFFFFF)
+val SoftLightBackground = Color(0xFFF0FDFA)
+val SoftLightOnSurface = Color(0xFF134E4A)
+
+// Theme 3: Dark Reading (قراءت لیلی)
+val DarkReadingPrimary = Color(0xFF34D399)
+val DarkReadingOnPrimary = Color(0xFF064E3B)
+val DarkReadingPrimaryContainer = Color(0xFF065F46)
+val DarkReadingOnPrimaryContainer = Color(0xFFA7F3D0)
+val DarkReadingSurface = Color(0xFF1E293B)
+val DarkReadingBackground = Color(0xFF0F172A)
+val DarkReadingOnSurface = Color(0xFFF1F5F9)
+val DarkReadingGold = Color(0xFFFBBF24)
+
+// Theme 4: Warm Cream (کریم پرسکون)
+val WarmCreamPrimary = Color(0xFF92400E)
+val WarmCreamOnPrimary = Color(0xFFFFFFFF)
+val WarmCreamPrimaryContainer = Color(0xFFFEF3C7)
+val WarmCreamOnPrimaryContainer = Color(0xFF78350F)
+val WarmCreamSurface = Color(0xFFFFFBEB)
+val WarmCreamBackground = Color(0xFFFEF9C3)
+val WarmCreamOnSurface = Color(0xFF451A03)
+val WarmCreamAccent = Color(0xFFB45309)
