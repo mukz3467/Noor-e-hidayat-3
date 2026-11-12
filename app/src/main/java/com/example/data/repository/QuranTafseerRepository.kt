@@ -395,13 +395,20 @@ object QuranTafseerRepository {
         val cacheKey = "${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}/${language.code}"
         cache[cacheKey]?.let { return@withContext it }
 
-        if (language == AppLanguage.URDU) {
+        if (language == AppLanguage.URDU || language == AppLanguage.ENGLISH) {
             readDownloadedAyah(edition.slug, ayah.surahNumber, ayah.ayahNumber)?.let { raw ->
                 val scoped = if (scholar.key == "saadi") extractSaadiAyahSection(raw, edition.slug, ayah.ayahNumber) else raw
                 val plain = Html.fromHtml(scoped, Html.FROM_HTML_MODE_LEGACY).toString().trim()
                 if (plain.isNotBlank()) {
-                    val saved = ScholarTafseer(scholar.key, scholar.displayName, scholar.bookTitle, scholar.era, plain, emptyList(), "${edition.attribution}; offline copy")
+                    val displayed = if (language == AppLanguage.ENGLISH) translateOnDevice(plain, AppLanguage.URDU, AppLanguage.ENGLISH) else plain
+                    val saved = ScholarTafseer(
+                        scholar.key, scholar.displayName, scholar.bookTitle, scholar.era, displayed, emptyList(),
+                        if (language == AppLanguage.ENGLISH) "${edition.attribution}; on-device machine translation from Urdu" else "${edition.attribution}; offline copy",
+                        isMachineTranslated = language == AppLanguage.ENGLISH,
+                        translationNotice = if (language == AppLanguage.ENGLISH) machineTranslationNotice(AppLanguage.ENGLISH, AppLanguage.URDU) else ""
+                    )
                     cache[cacheKey] = saved
+                    writeOffline(cacheKey, saved)
                     return@withContext saved
                 }
             }
