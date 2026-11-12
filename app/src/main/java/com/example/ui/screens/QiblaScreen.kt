@@ -197,7 +197,7 @@ fun QiblaScreen(
     )
 
     // Check if user is aligned with Kaaba (within ±3 degrees)
-    val isAligned = abs(((relativeAngle + 180f) % 360f) - 180f) <= 3.5f
+    val isAligned = hasCompassSensor && sensorAccuracy != SensorManager.SENSOR_STATUS_UNRELIABLE && sensorAccuracy != SensorManager.SENSOR_STATUS_ACCURACY_LOW && abs(((relativeAngle + 180f) % 360f) - 180f) <= 3.5f
 
     Scaffold(
         topBar = {
@@ -388,7 +388,7 @@ fun QiblaScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             // Accuracy / Calibration Warning if needed
-            if (hasCompassSensor && sensorAccuracy == SensorManager.SENSOR_STATUS_UNRELIABLE || sensorAccuracy == SensorManager.SENSOR_STATUS_ACCURACY_LOW) {
+            if (!hasCompassSensor || sensorAccuracy == SensorManager.SENSOR_STATUS_UNRELIABLE || sensorAccuracy == SensorManager.SENSOR_STATUS_ACCURACY_LOW) {
                 Card(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3CD)),
@@ -403,13 +403,13 @@ fun QiblaScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Compass Calibration Recommended",
+                                text = if (!hasCompassSensor) "Compass Sensor Not Available" else "Compass Calibration Recommended",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF856404)
                             )
                             Text(
-                                text = "Wave phone in a figure-8 motion away from metal covers or magnetic objects to restore sensor precision.",
+                                text = if (!hasCompassSensor) "This device does not expose a compatible compass sensor. Use the calculated Qibla bearing; compass alignment cannot be verified." else "Wave phone in a figure-8 motion away from metal covers or magnetic objects to restore sensor precision.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF856404)
                             )
