@@ -939,6 +939,47 @@ fun QuranReaderScreen(
                                 )
                             }
                         }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Text(
+                                    text = if (tafseerSheetLanguage == AppLanguage.URDU) "آف لائن" else if (tafseerSheetLanguage == AppLanguage.ENGLISH) "OFFLINE" else "",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                )
+                            }
+                            if (tafseerSheetLanguage == AppLanguage.ARABIC || tafseerSheetLanguage == AppLanguage.HINDI) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MaterialTheme.colorScheme.tertiaryContainer
+                                ) {
+                                    Text(
+                                        text = if (tafseerSheetLanguage == AppLanguage.ARABIC) "عبر الإنترنت" else "ऑनलाइन",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = when (tafseerSheetLanguage) {
+                                AppLanguage.URDU -> "اردو تفسیر پہلی بار انٹرنیٹ سے لوڈ ہونے کے بعد محفوظ ہو جائے گی اور پھر آف لائن دستیاب ہوگی۔"
+                                AppLanguage.ENGLISH -> "English tafseer is saved after its first online load and is then available offline."
+                                AppLanguage.ARABIC -> "تحتاج التفسيرات العربية إلى اتصال بالإنترنت عند عرضها."
+                                AppLanguage.HINDI -> "हिंदी तफ़सीर देखने के लिए इंटरनेट कनेक्शन आवश्यक है।"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(top = 3.dp)
+                        )
                     }
 
                     // Arabic Verse in Naskh Script
