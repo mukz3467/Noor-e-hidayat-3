@@ -61,6 +61,18 @@ fun PrayerTimesScreen(
     val userLocation by AppLocationManager.currentLocation.collectAsState()
     val isLocating by AppLocationManager.isLocating.collectAsState()
 
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { }
+
+    LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            !PrayerNotificationManager.hasNotificationPermission(context)
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     // Location Permission Launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -937,6 +949,18 @@ fun PrayerTimesScreen(
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
+
+                if (!PrayerNotificationManager.hasNotificationPermission(context)) {
+                    OutlinedButton(
+                        onClick = { notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.NotificationsActive, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Allow prayer notifications")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 if (!PrayerNotificationManager.canUseExactAlarms(context)) {
                     OutlinedButton(
