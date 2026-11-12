@@ -116,36 +116,22 @@ object QuranTafseerRepository {
      * Only editions listed by the upstream corpus are offered. The list is language-specific;
      * Hindi currently has one listed edition, not five invented scholar translations.
      */
-    fun getTop5Scholars(language: AppLanguage): List<ScholarInfo> = when (language) {
-        AppLanguage.URDU -> listOf(
-            ScholarInfo("ibn_kathir", "حافظ ابن کثیر", "تفسیر القرآن العظیم", "وفات ۷۷۴ھ", "حدیث و آثار"),
-            ScholarInfo("bayan_ul_quran", "ڈاکٹر اسرار احمد", "بیان القرآن", "معاصر", "قرآن کی تشریح"),
-            ScholarInfo("tazkirul_quran", "مولانا وحید الدین خان", "تذکیر القرآن", "معاصر", "دعوت و تدبر"),
-            ScholarInfo("saadi", "شیخ عبدالرحمن السعدی", "تیسیر الکریم الرحمن", "وفات ۱۳۷۶ھ", "آسان تشریح")
-        )
-        AppLanguage.ENGLISH -> listOf(
-            ScholarInfo("ibn_kathir", "Ibn Kathir", "Tafsir al-Qur'an al-Azim", "d. 774 AH", "Hadith-based"),
-            ScholarInfo("maariful_quran", "Mufti Muhammad Shafi", "Ma'ariful Qur'an", "d. 1396 AH", "Fiqh and language"),
-            ScholarInfo("tazkirul_quran", "Maulana Wahiduddin Khan", "Tazkirul Quran", "Contemporary", "Reflection"),
-            ScholarInfo("jalalayn", "Al-Jalalayn", "Tafsir al-Jalalayn", "Classical", "Concise"),
-            ScholarInfo("mukhtasar", "Tafsir Center for Quranic Studies", "Al-Mukhtasar", "Contemporary", "Concise explanation")
-        )
-        AppLanguage.ARABIC -> listOf(
-            ScholarInfo("ibn_kathir", "ابن كثير", "تفسير القرآن العظيم", "توفي ٧٧٤هـ", "بالمأثور"),
-            ScholarInfo("tabari", "الإمام الطبري", "جامع البيان", "توفي ٣١٠هـ", "الرواية واللغة"),
-            ScholarInfo("qurtubi", "الإمام القرطبي", "الجامع لأحكام القرآن", "توفي ٦٧١هـ", "فقه وأحكام"),
-            ScholarInfo("saadi", "عبد الرحمن السعدي", "تيسير الكريم الرحمن", "توفي ١٣٧٦هـ", "تفسير ميسر"),
-            ScholarInfo("baghawi", "الإمام البغوي", "معالم التنزيل", "توفي ٥١٦هـ", "بالمأثور"),
-            ScholarInfo("mukhtasar", "مركز تفسير للدراسات القرآنية", "التفسير الميسر المختصر", "معاصر", "شرح موجز"),
-            ScholarInfo("muyassar", "مجمع الملك فهد", "التفسير الميسر", "معاصر", "شرح ميسر")
-        )
-        AppLanguage.HINDI -> listOf(
-            ScholarInfo("hindi_mukhtasar", "Hindi Mokhtasar", "Hindi Mokhtasar", "Edition listed in source catalogue", "सरल व्याख्या")
-        )
-    }
+    /**
+     * The tafseer reader uses five Urdu source editions. Other display languages
+     * are translations of the selected Urdu source, never a different scholar list.
+     */
+    fun getTop5Scholars(language: AppLanguage): List<ScholarInfo> = listOf(
+        ScholarInfo("ibn_kathir", "حافظ ابن کثیر", "تفسیر القرآن العظیم", "وفات ۷۷۴ھ", "حدیث و آثار"),
+        ScholarInfo("sayyid_qutb", "سید قطب", "فی ظلال القرآن", "وفات ۱۳۸۶ھ", "قرآنی تدبر"),
+        ScholarInfo("bayan_ul_quran", "ڈاکٹر اسرار احمد", "بیان القرآن", "معاصر", "قرآن کی تشریح"),
+        ScholarInfo("tazkirul_quran", "مولانا وحید الدین خان", "تذکیر القرآن", "معاصر", "دعوت و تدبر"),
+        ScholarInfo("saadi", "شیخ عبدالرحمن السعدی", "تیسیر الکریم الرحمن", "وفات ۱۳۷۶ھ", "آسان تشریح")
+    )
 
     /** Map each visible source choice to its exact catalogue edition. */
     private fun editionFor(scholarKey: String, language: AppLanguage): Edition? = when (scholarKey) {
+        "sayyid_qutb" -> if (language == AppLanguage.URDU)
+            Edition("ur-tafsir-fe-zalul-quran-syed-qatab", "Fi Zilal al-Quran by Sayyid Ibrahim Qutb; spa5k/tafsir_api", AppLanguage.URDU) else null
         "ibn_kathir" -> when (language) {
             AppLanguage.URDU -> Edition("ur-tafseer-ibn-e-kaseer", "Urdu Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.URDU)
             AppLanguage.ARABIC -> Edition("ar-tafsir-ibn-kathir", "Arabic Tafsir Ibn Kathir; corpus mirror: spa5k/tafsir_api", AppLanguage.ARABIC)
@@ -197,12 +183,9 @@ object QuranTafseerRepository {
      * edition, fall back only to the connected Arabic edition and disclose its source.
      */
     private fun sourceEditionFor(scholarKey: String, targetLanguage: AppLanguage): Edition? {
-        val preferredLanguages = when (targetLanguage) {
-            AppLanguage.HINDI -> listOf(AppLanguage.HINDI, AppLanguage.URDU, AppLanguage.ENGLISH, AppLanguage.ARABIC)
-            AppLanguage.ARABIC -> listOf(AppLanguage.ARABIC, AppLanguage.URDU, AppLanguage.ENGLISH)
-            AppLanguage.URDU -> listOf(AppLanguage.URDU, AppLanguage.ENGLISH, AppLanguage.ARABIC)
-            AppLanguage.ENGLISH -> listOf(AppLanguage.ENGLISH, AppLanguage.URDU, AppLanguage.ARABIC)
-        }
+        // The five displayed commentaries are Urdu source editions. Keep that
+        // source fixed when the reader chooses English, Hindi, or Arabic output.
+        val preferredLanguages = listOf(AppLanguage.URDU, targetLanguage, AppLanguage.ENGLISH, AppLanguage.ARABIC).distinct()
         return preferredLanguages.firstNotNullOfOrNull { sourceLanguage ->
             editionFor(scholarKey, sourceLanguage)
         }
