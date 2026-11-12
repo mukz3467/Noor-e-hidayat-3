@@ -36,11 +36,6 @@ fun InAppYouTubePlayer(
     var isLoading by remember { mutableStateOf(true) }
     var isRendererCrashed by remember { mutableStateOf(false) }
     var reloadCount by remember { mutableIntStateOf(0) }
-    var showSignInDialog by remember { mutableStateOf(false) }
-
-    val isSignedIn = remember(reloadCount) {
-        YouTubeAuthManager.isSignedIn(context)
-    }
 
     val cleanVideoId = remember(videoId) {
         when {
@@ -51,98 +46,7 @@ fun InAppYouTubePlayer(
         }
     }
 
-    if (showSignInDialog) {
-        YouTubeSignInDialog(
-            onDismissRequest = { showSignInDialog = false },
-            onSignInSuccess = {
-                showSignInDialog = false
-                hasError = false
-                isRendererCrashed = false
-                reloadCount++
-            }
-        )
-    }
-
     Column(modifier = modifier) {
-        // Stream Engine Status & In-App YouTube Account Bar (No external redirects)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF111827))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Bolt,
-                    contentDescription = null,
-                    tint = Color(0xFF10B981),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = if (isSignedIn) "In-App Player (Verified Account)" else "In-App Player (Auto-Play)",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
-                )
-            }
-
-            if (isSignedIn) {
-                Surface(
-                    onClick = {
-                        showSignInDialog = true
-                    },
-                    shape = RoundedCornerShape(6.dp),
-                    color = Color(0xFF10B981).copy(alpha = 0.2f)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Signed In ✓",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = Color(0xFF10B981)
-                        )
-                    }
-                }
-            } else {
-                Surface(
-                    onClick = {
-                        showSignInDialog = true
-                    },
-                    shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Sign In",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,23 +64,6 @@ fun InAppYouTubePlayer(
                                 )
                                 setBackgroundColor(android.graphics.Color.BLACK)
 
-                                val cookieManager = CookieManager.getInstance()
-                                cookieManager.setAcceptCookie(true)
-                                cookieManager.setAcceptThirdPartyCookies(this, true)
-
-                                val sessionCookies = listOf(
-                                    "CONSENT=YES+cb.20240401-00-p0.en+FX+999; path=/; domain=.youtube.com; Secure; SameSite=None",
-                                    "VISITOR_INFO1_LIVE=oKckVSqvaGw; path=/; domain=.youtube.com; Secure; SameSite=None",
-                                    "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg; path=/; domain=.youtube.com; Secure; SameSite=None",
-                                    "PREF=tz=UTC&f6=40000000&f5=30000&hl=en; path=/; domain=.youtube.com; Secure; SameSite=None"
-                                )
-                                try {
-                                    for (cookie in sessionCookies) {
-                                        cookieManager.setCookie("https://www.youtube.com", cookie)
-                                    }
-                                    cookieManager.flush()
-                                } catch (_: Exception) {}
-
                                 settings.apply {
                                     javaScriptEnabled = true
                                     domStorageEnabled = true
@@ -187,11 +74,7 @@ fun InAppYouTubePlayer(
                                     cacheMode = WebSettings.LOAD_DEFAULT
                                     allowContentAccess = true
                                     allowFileAccess = false
-                                    mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-
-                                    // Clean Android Chrome Mobile user-agent without "; wv" to allow Google sign-in
-                                    // and avoid Site-Isolation/renderer crashes
-                                    userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+                                    mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                                 }
 
                                 webChromeClient = object : WebChromeClient() {
@@ -203,12 +86,7 @@ fun InAppYouTubePlayer(
                                 webViewClient = object : WebViewClient() {
                                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                         val url = request?.url?.toString() ?: ""
-                                        // Only intercept top-level main frame navigation to Google Sign In
-                                        if (request?.isForMainFrame == true && (url.contains("accounts.google.com") || url.contains("youtube.com/signin"))) {
-                                            showSignInDialog = true
-                                            return true
-                                        }
-                                        // Allow all embedded video, media, and YouTube sub-resources without blocking
+                                        // Use the public embedded player without a forced account sign-in flow.
                                         return false
                                     }
 
@@ -324,7 +202,7 @@ fun InAppYouTubePlayer(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Sign in once with your Google account to play smoothly without bot checks.",
+                            text = "This broadcast could not be loaded. It may be offline, restricted, or unavailable in your region. Try another stream.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f),
                             textAlign = TextAlign.Center
@@ -332,21 +210,8 @@ fun InAppYouTubePlayer(
                         Spacer(modifier = Modifier.height(14.dp))
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth(0.9f)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Button(
-                                onClick = {
-                                    showSignInDialog = true
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sign In", fontWeight = FontWeight.Bold, color = Color.White)
-                            }
-
                             OutlinedButton(
                                 onClick = {
                                     hasError = false
