@@ -16,6 +16,7 @@ import com.example.data.model.AppTheme
 import com.example.data.repository.QuranAudioManager
 import com.example.data.repository.QuranData
 import com.example.data.repository.QuranOfflineSyncManager
+import com.example.data.repository.QuranTafseerRepository
 import com.example.data.repository.UserPreferencesRepository
 import com.example.ui.components.AppDirectionProvider
 import com.example.ui.screens.*
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
         QuranData.init(applicationContext)
         QuranAudioManager.init(applicationContext)
         QuranOfflineSyncManager.startAutoSync(applicationContext)
+        QuranTafseerRepository.init(applicationContext)
         enableEdgeToEdge()
 
         setContent {
