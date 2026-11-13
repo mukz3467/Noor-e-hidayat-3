@@ -941,7 +941,7 @@ fun QuranReaderScreen(
                                 modifier = Modifier.testTag("tafseer_source_ur")
                             )
                             Text(
-                                text = "ترجمہ کریں:",
+                                text = "خودکار ترجمہ منتخب کریں:",
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.primary
                             )
