@@ -658,8 +658,16 @@ fun QuranReaderScreen(
         // Translation Bottom Sheet with Accurate Text & Revelation Context
         if (activeTranslationAyah != null) {
             val curAyah = activeTranslationAyah!!
-            val revContext = remember(curAyah.surahNumber, curAyah.ayahNumber, translationSheetLanguage) {
-                QuranTafseerRepository.getRevelationContext(
+            var revContext by remember(curAyah.surahNumber, curAyah.ayahNumber, translationSheetLanguage) {
+                mutableStateOf(
+                    QuranTafseerRepository.getRevelationContext(
+                        ayah = curAyah,
+                        language = translationSheetLanguage
+                    )
+                )
+            }
+            LaunchedEffect(curAyah.surahNumber, curAyah.ayahNumber, translationSheetLanguage) {
+                revContext = QuranTafseerRepository.getTranslationContext(
                     ayah = curAyah,
                     language = translationSheetLanguage
                 )
@@ -825,14 +833,14 @@ fun QuranReaderScreen(
                         }
                     }
 
-                    // Section Heading: Revelation Context & Spiritual Significance
+                    // Translation details stay inside the existing Tarjuma sheet.
                     item {
                         Text(
                             text = when (translationSheetLanguage) {
-                                AppLanguage.URDU -> "شانِ نزول و تفصیلی پس منظر"
-                                AppLanguage.ARABIC -> "أسباب النزول والمقاصد الشرعية"
-                                AppLanguage.HINDI -> "शान-ए-नुजूल व विस्तृत संदर्भ"
-                                AppLanguage.ENGLISH -> "Revelation Context & Spiritual Significance"
+                                AppLanguage.URDU -> "آیت کا پس منظر اور رہنمائی"
+                                AppLanguage.ARABIC -> "سياق الآية والهداية"
+                                AppLanguage.HINDI -> "आयत की पृष्ठभूमि और मार्गदर्शन"
+                                AppLanguage.ENGLISH -> "Ayah Context & Guidance"
                             },
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface,
@@ -840,29 +848,14 @@ fun QuranReaderScreen(
                         )
                     }
 
-                    // 1. سبب النزول (Sabab-e-Nuzool)
+                    // 1. Revelation period / surah classification; not an exact ayah date.
                     item {
                         ContextInfoCard(
                             title = when (translationSheetLanguage) {
-                                AppLanguage.URDU -> "۱. سببِ نزول (یہ آیت کیوں نازل ہوئی؟)"
-                                AppLanguage.ARABIC -> "١. سبب النزول (لماذا نزلت هذه الآية؟)"
-                                AppLanguage.HINDI -> "1. सबब-ए-नुजूल (यह आयत क्यों नाज़िल हुई?)"
-                                AppLanguage.ENGLISH -> "1. Occasion of Revelation (Why Was It Revealed?)"
-                            },
-                            body = revContext.sababNuzool,
-                            icon = Icons.Default.History,
-                            accentColor = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    // 2. زمانۂ نزول (Zamana-e-Nuzool)
-                    item {
-                        ContextInfoCard(
-                            title = when (translationSheetLanguage) {
-                                AppLanguage.URDU -> "۲. زمانۂ نزول (کس وقت / دور میں نازل ہوئی؟)"
-                                AppLanguage.ARABIC -> "٢. زمان النزول وتاريخ البعثة"
-                                AppLanguage.HINDI -> "2. ज़माना-ए-नुजूल (किस काल में नाज़िल हुई?)"
-                                AppLanguage.ENGLISH -> "2. Period of Revelation (Historical Phase & Era)"
+                                AppLanguage.URDU -> "۱. شانِ نزول / زمانۂ نزول"
+                                AppLanguage.ARABIC -> "١. سياق النزول وزمانه"
+                                AppLanguage.HINDI -> "1. शान-ए-नुज़ूल / नुज़ूल का समय"
+                                AppLanguage.ENGLISH -> "1. Revelation Context & Period"
                             },
                             body = revContext.zamanaNuzool,
                             icon = Icons.Default.Schedule,
@@ -870,29 +863,29 @@ fun QuranReaderScreen(
                         )
                     }
 
-                    // 3. مقصد و حکمت (Maqsad-o-Hikmat)
+                    // 2. Ayah-specific reason, only when the source contains a report.
                     item {
                         ContextInfoCard(
                             title = when (translationSheetLanguage) {
-                                AppLanguage.URDU -> "۳. مقصد و حکمت (نازل ہونے کا مقصد کیا ہے؟)"
-                                AppLanguage.ARABIC -> "٣. المقصد والحكمة الإلهية"
-                                AppLanguage.HINDI -> "3. मक़सद व हिकमत (नाज़िल होने का मक़सद क्या है?)"
-                                AppLanguage.ENGLISH -> "3. Divine Objective & Core Wisdom"
+                                AppLanguage.URDU -> "۲. یہ آیت کیوں نازل ہوئی؟ (سببِ نزول)"
+                                AppLanguage.ARABIC -> "٢. لماذا نزلت هذه الآية؟ (سبب النزول)"
+                                AppLanguage.HINDI -> "2. यह आयत क्यों नाज़िल हुई? (सबब-ए-नुज़ूल)"
+                                AppLanguage.ENGLISH -> "2. Why Was This Ayah Revealed? (Asbab al-Nuzul)"
                             },
-                            body = revContext.maqsadHikmat,
-                            icon = Icons.Default.Lightbulb,
-                            accentColor = Color(0xFF0D9488)
+                            body = revContext.sababNuzool,
+                            icon = Icons.Default.History,
+                            accentColor = MaterialTheme.colorScheme.primary
                         )
                     }
 
-                    // 4. فضائل و برکات (Fazaail-o-Barkaat)
+                    // 3. Benefits are shown only when a verified report is bundled.
                     item {
                         ContextInfoCard(
                             title = when (translationSheetLanguage) {
-                                AppLanguage.URDU -> "۴. فضائل و برکات (پڑھنے کے فوائد و احادیث)"
-                                AppLanguage.ARABIC -> "٤. الفضائل والبركات والأحاديث الشريفة"
-                                AppLanguage.HINDI -> "4. फ़ज़ाइल व बरकात (पढ़ने के लाभ व हदीस)"
-                                AppLanguage.ENGLISH -> "4. Virtues, Benefits & Recitation Blessings"
+                                AppLanguage.URDU -> "۳. آیت کے فوائد اور عملی اسباق"
+                                AppLanguage.ARABIC -> "٣. فوائد الآية والدروس العملية"
+                                AppLanguage.HINDI -> "3. आयत के लाभ और व्यावहारिक सीख"
+                                AppLanguage.ENGLISH -> "3. Benefits & Practical Lessons"
                             },
                             body = revContext.fazaailBenefits,
                             icon = Icons.Default.Star,
