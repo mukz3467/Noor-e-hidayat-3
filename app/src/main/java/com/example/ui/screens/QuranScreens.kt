@@ -682,7 +682,7 @@ fun QuranReaderScreen(
                             Text(
                                 text = when (translationSheetLanguage) {
                                     AppLanguage.URDU -> "ترجمہ و پس منظر: آیت ${curAyah.ayahNumber}"
-                                    AppLanguage.ARABIC -> "الترجمة وأسباب النزول: آية ${curAyah.ayahNumber}"
+                                    AppLanguage.ARABIC -> "النص العربي وسياق الآية: آية ${curAyah.ayahNumber}"
                                     AppLanguage.HINDI -> "अनुवाद व पृष्ठभूमि: आयत ${curAyah.ayahNumber}"
                                     AppLanguage.ENGLISH -> "Translation & Context: Ayah ${curAyah.ayahNumber}"
                                 },
@@ -759,7 +759,7 @@ fun QuranReaderScreen(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "یہ قرآنِ کریم کا اصل عربی متن ہے، ترجمہ نہیں۔ اوپر آیت عربی رسم الخط میں موجود ہے۔",
+                                        text = "هذا هو النص العربي الأصلي للقرآن الكريم، وليس ترجمة؛ والآية معروضة أعلاه.",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
