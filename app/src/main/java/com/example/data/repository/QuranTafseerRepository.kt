@@ -511,6 +511,46 @@ object QuranTafseerRepository {
         return getScholarTafseer(ayah, scholarKey, language)
     }
 
+    /**
+     * Loads Al-Wahidi's published English Asbab al-Nuzul entry for this exact ayah.
+     * The corpus does not cover every ayah; missing entries remain explicitly unavailable.
+     * Non-English display is ML Kit translation and is disclosed as machine translated.
+     */
+    suspend fun getTranslationContext(ayah: Ayah, language: AppLanguage): AyahRevelationContext =
+        withContext(Dispatchers.IO) {
+            init(appContext ?: throw IllegalStateException("Repository not initialized"))
+            val base = getRevelationContext(ayah, language)
+            val key = "translation_context_${ayah.surahNumber}_${ayah.ayahNumber}_${language.code}"
+            offlinePrefs?.getString(key, null)?.let { cached ->
+                try {
+                    val j = JSONObject(cached)
+                    return@withContext AyahRevelationContext(
+                        j.optString("sabab"), base.zamanaNuzool, base.maqsadHikmat, base.fazaailBenefits
+                    )
+                } catch (_: Exception) { }
+            }
+            try {
+                val primary = "https://raw.githubusercontent.com/spa5k/tafsir_api/main/tafsir/en-asbab-al-nuzul-by-al-wahidi/${ayah.surahNumber}/${ayah.ayahNumber}.json"
+                val fallback = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/en-asbab-al-nuzul-by-al-wahidi/${ayah.surahNumber}/${ayah.ayahNumber}.json"
+                val json = JSONObject(fetchSourceText(primary, fallback, "Asbab al-Nuzul"))
+                val englishText = json.optString("text").trim()
+                if (englishText.isBlank() || englishText == "null") return@withContext base
+                val translated = if (language == AppLanguage.ENGLISH) englishText
+                    else translateOnDevice(englishText, AppLanguage.ENGLISH, language)
+                val notice = when (language) {
+                    AppLanguage.URDU -> "\\n\\nماخذ: اسباب النزول، امام واحدی (انگریزی متن کا Google ML Kit سے مشینی ترجمہ؛ اصل مطبوعہ اردو ترجمہ نہیں)۔"
+                    AppLanguage.ARABIC -> "\\n\\nالمصدر: أسباب النزول للواحدي (ترجمة آلية من النص الإنجليزي عبر Google ML Kit وليست ترجمة عربية منشورة)."
+                    AppLanguage.HINDI -> "\\n\\nस्रोत: अल-वाहिदी की असबाब अल-नुज़ूल (अंग्रेज़ी से Google ML Kit द्वारा मशीन अनुवाद; प्रकाशित हिंदी अनुवाद नहीं)।"
+                    AppLanguage.ENGLISH -> "\\n\\nSource: Asbab al-Nuzul by al-Wahidi (English source text)."
+                }
+                val resultText = translated + notice
+                offlinePrefs?.edit()?.putString(key, JSONObject().put("sabab", resultText).toString())?.apply()
+                base.copy(sababNuzool = resultText)
+            } catch (_: Exception) {
+                base
+            }
+        }
+
     fun getRevelationContext(ayah: Ayah, language: AppLanguage): AyahRevelationContext {
         val unavailable = when (language) {
             AppLanguage.URDU -> "اس مخصوص آیت کے سببِ نزول کی مستند روایت آف لائن ڈیٹا میں موجود نہیں۔ غیر مصدقہ سببِ نزول بیان نہیں کیا جائے گا۔"
