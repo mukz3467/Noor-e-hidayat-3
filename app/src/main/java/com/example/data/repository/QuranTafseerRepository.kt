@@ -538,10 +538,10 @@ object QuranTafseerRepository {
                 val translated = if (language == AppLanguage.ENGLISH) englishText
                     else translateOnDevice(englishText, AppLanguage.ENGLISH, language)
                 val notice = when (language) {
-                    AppLanguage.URDU -> "\\n\\nماخذ: اسباب النزول، امام واحدی (انگریزی متن کا Google ML Kit سے مشینی ترجمہ؛ اصل مطبوعہ اردو ترجمہ نہیں)۔"
-                    AppLanguage.ARABIC -> "\\n\\nالمصدر: أسباب النزول للواحدي (ترجمة آلية من النص الإنجليزي عبر Google ML Kit وليست ترجمة عربية منشورة)."
-                    AppLanguage.HINDI -> "\\n\\nस्रोत: अल-वाहिदी की असबाब अल-नुज़ूल (अंग्रेज़ी से Google ML Kit द्वारा मशीन अनुवाद; प्रकाशित हिंदी अनुवाद नहीं)।"
-                    AppLanguage.ENGLISH -> "\\n\\nSource: Asbab al-Nuzul by al-Wahidi (English source text)."
+                    AppLanguage.URDU -> "\n\nماخذ: اسباب النزول، امام واحدی (انگریزی متن کا Google ML Kit سے مشینی ترجمہ؛ اصل مطبوعہ اردو ترجمہ نہیں)۔"
+                    AppLanguage.ARABIC -> "\n\nالمصدر: أسباب النزول للواحدي (ترجمة آلية من النص الإنجليزي عبر Google ML Kit وليست ترجمة عربية منشورة)."
+                    AppLanguage.HINDI -> "\n\nस्रोत: अल-वाहिदी की असबाब अल-नुज़ूल (अंग्रेज़ी से Google ML Kit द्वारा मशीन अनुवाद; प्रकाशित हिंदी अनुवाद नहीं)।"
+                    AppLanguage.ENGLISH -> "\n\nSource: Asbab al-Nuzul by al-Wahidi (English source text)."
                 }
                 val resultText = translated + notice
                 offlinePrefs?.edit()?.putString(key, JSONObject().put("sabab", resultText).toString())?.apply()
