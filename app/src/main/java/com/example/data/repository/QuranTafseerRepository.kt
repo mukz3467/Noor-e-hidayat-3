@@ -116,12 +116,9 @@ object QuranTafseerRepository {
                             } catch (_: Exception) { }
                             target.delete()
                         }
-                        val url = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${source.slug}/$surah.json"
-                        val request = Request.Builder().url(url).header("User-Agent", "Noor-e-Hidayat/1.0").get().build()
-                        val body = client.newCall(request).execute().use { response ->
-                            if (!response.isSuccessful) throw IllegalStateException("${source.label}, سورۃ $surah: HTTP ${response.code}")
-                            response.body?.string().orEmpty()
-                        }
+                        val primaryUrl = "https://raw.githubusercontent.com/spa5k/tafsir_api/main/tafsir/${source.slug}/$surah.json"
+                        val fallbackUrl = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${source.slug}/$surah.json"
+                        val body = fetchSourceText(primaryUrl, fallbackUrl, "${source.label}, سورۃ $surah")
                         val ayahs = JSONArray(body)
                         val expected = QuranData.surahs.first { it.number == surah }.ayahCount
                         if (ayahs.length() != expected) throw IllegalStateException("${source.label}, سورۃ $surah: ${ayahs.length()}/$expected آیات ملیں")
@@ -145,6 +142,33 @@ object QuranTafseerRepository {
                 OfflineDownloadResult(false, completed, total, error.message ?: "Download failed")
             }
         }
+
+    /**
+     * Fetch original source text with a GitHub Raw primary and jsDelivr fallback.
+     * Both endpoints serve the same versioned upstream JSON; no text is generated.
+     */
+    private fun fetchSourceText(primaryUrl: String, fallbackUrl: String, label: String): String {
+        var lastError: Exception? = null
+        for (url in listOf(primaryUrl, fallbackUrl)) {
+            try {
+                val request = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Noor-e-Hidayat/1.0 (Quran study app)")
+                    .get()
+                    .build()
+                return client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw IllegalStateException("$label: HTTP ${response.code}")
+                    }
+                    response.body?.string()?.takeIf { it.isNotBlank() }
+                        ?: throw IllegalStateException("$label: empty source response")
+                }
+            } catch (error: Exception) {
+                lastError = error
+            }
+        }
+        throw IllegalStateException("$label: both source mirrors failed (${lastError?.message ?: "unknown error"})")
+    }
 
     private fun readDownloadedAyah(slug: String, surah: Int, ayah: Int): String? {
         return try {
@@ -421,15 +445,11 @@ object QuranTafseerRepository {
         }
 
         try {
-            val url = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}.json"
-            val request = Request.Builder()
-                .url(url)
-                .header("User-Agent", "Noor-e-Hidayat/1.0 (Quran study app)")
-                .get()
-                .build()
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IllegalStateException("Tafseer source returned HTTP ${response.code}")
-                val json = JSONObject(response.body?.string().orEmpty())
+            val primaryUrl = "https://raw.githubusercontent.com/spa5k/tafsir_api/main/tafsir/${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}.json"
+            val fallbackUrl = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/${edition.slug}/${ayah.surahNumber}/${ayah.ayahNumber}.json"
+            val sourceBody = fetchSourceText(primaryUrl, fallbackUrl, "Surah ${ayah.surahNumber}, ayah ${ayah.ayahNumber}")
+            run {
+                val json = JSONObject(sourceBody)
                 val rawText = json.optString("text").trim()
                 if (rawText.isBlank() || rawText == "null") {
                     throw IllegalStateException("No source text exists for this ayah in this edition")
